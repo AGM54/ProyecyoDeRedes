@@ -9,18 +9,16 @@ import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
-import org.jivesoftware.smack.roster.RosterListener;
-import org.jivesoftware.smack.roster.RosterPacket;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.DNSUtil;
 import org.jivesoftware.smack.util.dns.minidns.MiniDnsResolver;
 import org.jivesoftware.smackx.iqregister.AccountManager;
-import org.jivesoftware.smackx.search.UserSearchManager;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
+import org.jivesoftware.smack.packet.Presence;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -42,8 +40,11 @@ public class RegisterAccount {
             System.out.println("3. Enviar mensaje a echobot@alumchat.lol");
             System.out.println("4. Cerrar sesión");
             System.out.println("5. Eliminar cuenta del servidor");
-            System.out.println("6. Mostrar contactos y su estado");
-            System.out.println("7. Salir");
+            System.out.println("6. Salir");
+            System.out.println("7. Agregar un contacto");
+            System.out.println("8. Ver contactos");
+            System.out.println("9. Mostrar todos los usuarios conectados y sus mensajes de presencia");
+            System.out.println("10. Definir mensaje de presencia");
             int opcion = scanner.nextInt();
             scanner.nextLine();  // Consume newline
 
@@ -84,17 +85,71 @@ public class RegisterAccount {
                     eliminarCuenta(domain, username, password);
                     break;
                 case 6:
-                    mostrarContactosYEstado();
-                    break;
-                case 7:
                     running = false;
                     System.out.println("Saliendo...");
+                    break;
+                case 7:
+                    if (connection != null && connection.isAuthenticated()) {
+                        agregarContacto("gla21299@alumchat.lol");
+                    } else {
+                        System.out.println("Debe iniciar sesión antes de agregar un contacto.");
+                        System.out.println("Ingrese el nombre de usuario:");
+                        username = scanner.nextLine();
+                        System.out.println("Ingrese la contraseña:");
+                        password = scanner.nextLine();
+                        if (iniciarSesion(domain, username, password)) {
+                            agregarContacto("gla21299@alumchat.lol");
+                        }
+                    }
+                    break;
+                case 8:
+                    if (connection != null && connection.isAuthenticated()) {
+                        verContactos();
+                    } else {
+                        System.out.println("Debe iniciar sesión antes de ver los contactos.");
+                        System.out.println("Ingrese el nombre de usuario:");
+                        username = scanner.nextLine();
+                        System.out.println("Ingrese la contraseña:");
+                        password = scanner.nextLine();
+                        if (iniciarSesion(domain, username, password)) {
+                            verContactos();
+                        }
+                    }
+                    break;
+                case 9:
+                    if (connection != null && connection.isAuthenticated()) {
+                        mostrarUsuariosConectados();
+                    } else {
+                        System.out.println("Debe iniciar sesión antes de mostrar todos los usuarios conectados.");
+                        System.out.println("Ingrese el nombre de usuario:");
+                        username = scanner.nextLine();
+                        System.out.println("Ingrese la contraseña:");
+                        password = scanner.nextLine();
+                        if (iniciarSesion(domain, username, password)) {
+                            mostrarUsuariosConectados();
+                        }
+                    }
+                    break;
+                case 10:
+                    if (connection != null && connection.isAuthenticated()) {
+                        definirMensajePresencia();
+                    } else {
+                        System.out.println("Debe iniciar sesión antes de definir un mensaje de presencia.");
+                        System.out.println("Ingrese el nombre de usuario:");
+                        username = scanner.nextLine();
+                        System.out.println("Ingrese la contraseña:");
+                        password = scanner.nextLine();
+                        if (iniciarSesion(domain, username, password)) {
+                            definirMensajePresencia();
+                        }
+                    }
                     break;
                 default:
                     System.out.println("Opción no válida.");
             }
         }
         scanner.close();
+        cerrarSesion(); // Cerrar sesión al salir del bucle
     }
 
     public static void registrarCuenta(String domain, String username, String password) {
@@ -137,7 +192,7 @@ public class RegisterAccount {
         }
     }
 
-    public static void iniciarSesion(String domain, String username, String password) {
+    public static boolean iniciarSesion(String domain, String username, String password) {
         try {
             // Configurar el DNS resolver
             DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
@@ -162,18 +217,16 @@ public class RegisterAccount {
                     System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
                 });
 
-                // Mantener la conexión abierta para recibir mensajes
-                System.out.println("Presione Enter para cerrar la sesión...");
-                new Scanner(System.in).nextLine();
+                return true;
 
             } catch (SmackException | IOException | XMPPException | InterruptedException e) {
                 System.out.println("Error al iniciar sesión: " + e.getMessage());
                 e.printStackTrace();
-            } finally {
-                connection.disconnect();
+                return false;
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
@@ -269,16 +322,82 @@ public class RegisterAccount {
         }
     }
 
-    public static void mostrarContactosYEstado() {
+    public static void agregarContacto(String jidStr) {
         if (connection != null && connection.isAuthenticated()) {
-            Roster roster = Roster.getInstanceFor(connection);
-            Collection<RosterEntry> entries = roster.getEntries();
+            try {
+                EntityBareJid jid = JidCreate.entityBareFrom(jidStr);
+                Roster roster = Roster.getInstanceFor(connection);
+                roster.createEntry(jid, jidStr, null);
+                System.out.println("Contacto agregado exitosamente.");
+            } catch (Exception e) {
+                System.out.println("Error al agregar contacto: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
+    }
 
-            System.out.println("Contactos y su estado:");
-            for (RosterEntry entry : entries) {
-                String name = entry.getName();
-                String status = roster.getPresence(entry.getJid()).getStatus();
-                System.out.println(name + ": " + (status != null ? status : "Sin estado"));
+    public static void verContactos() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                Roster roster = Roster.getInstanceFor(connection);
+                Collection<RosterEntry> entries = roster.getEntries();
+                System.out.println("Contactos:");
+                for (RosterEntry entry : entries) {
+                    Presence presence = roster.getPresence(entry.getJid());
+                    String status = presence.isAvailable() ? "Conectado" : "Desconectado";
+                    String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                    System.out.println(entry.getJid() + " - " + status + " (" + presenceMessage + ")");
+                }
+            } catch (Exception e) {
+                System.out.println("Error al obtener la lista de contactos: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
+    }
+
+    public static void mostrarUsuariosConectados() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                Roster roster = Roster.getInstanceFor(connection);
+                Collection<RosterEntry> entries = roster.getEntries();
+                System.out.println("Usuarios conectados:");
+                for (RosterEntry entry : entries) {
+                    Presence presence = roster.getPresence(entry.getJid());
+                    if (presence.isAvailable()) {
+                        String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                        System.out.println(entry.getJid() + " está conectado (" + presenceMessage + ")");
+                    } else {
+                        System.out.println(entry.getJid() + " está desconectado");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Error al obtener la lista de usuarios conectados: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
+    }
+
+    public static void definirMensajePresencia() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                Scanner scanner = new Scanner(System.in);
+                System.out.println("Ingrese su mensaje de presencia:");
+                String mensajePresencia = scanner.nextLine();
+
+                Presence presence = new Presence(Presence.Type.available);
+                presence.setStatus(mensajePresencia);
+                connection.sendStanza(presence);
+
+                System.out.println("Mensaje de presencia actualizado a: " + mensajePresencia);
+            } catch (Exception e) {
+                System.out.println("Error al definir el mensaje de presencia: " + e.getMessage());
+                e.printStackTrace();
             }
         } else {
             System.out.println("No has iniciado sesión.");
