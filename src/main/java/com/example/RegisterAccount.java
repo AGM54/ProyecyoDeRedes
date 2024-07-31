@@ -7,17 +7,23 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat2.Chat;
 import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.roster.Roster;
+import org.jivesoftware.smack.roster.RosterEntry;
+import org.jivesoftware.smack.roster.RosterListener;
+import org.jivesoftware.smack.roster.RosterPacket;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.DNSUtil;
 import org.jivesoftware.smack.util.dns.minidns.MiniDnsResolver;
 import org.jivesoftware.smackx.iqregister.AccountManager;
+import org.jivesoftware.smackx.search.UserSearchManager;
 import org.jxmpp.jid.EntityBareJid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Scanner;
 
 public class RegisterAccount {
@@ -36,7 +42,8 @@ public class RegisterAccount {
             System.out.println("3. Enviar mensaje a echobot@alumchat.lol");
             System.out.println("4. Cerrar sesión");
             System.out.println("5. Eliminar cuenta del servidor");
-            System.out.println("6. Salir");
+            System.out.println("6. Mostrar contactos y su estado");
+            System.out.println("7. Salir");
             int opcion = scanner.nextInt();
             scanner.nextLine();  // Consume newline
 
@@ -77,6 +84,9 @@ public class RegisterAccount {
                     eliminarCuenta(domain, username, password);
                     break;
                 case 6:
+                    mostrarContactosYEstado();
+                    break;
+                case 7:
                     running = false;
                     System.out.println("Saliendo...");
                     break;
@@ -256,6 +266,22 @@ public class RegisterAccount {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void mostrarContactosYEstado() {
+        if (connection != null && connection.isAuthenticated()) {
+            Roster roster = Roster.getInstanceFor(connection);
+            Collection<RosterEntry> entries = roster.getEntries();
+
+            System.out.println("Contactos y su estado:");
+            for (RosterEntry entry : entries) {
+                String name = entry.getName();
+                String status = roster.getPresence(entry.getJid()).getStatus();
+                System.out.println(name + ": " + (status != null ? status : "Sin estado"));
+            }
+        } else {
+            System.out.println("No has iniciado sesión.");
         }
     }
 }
