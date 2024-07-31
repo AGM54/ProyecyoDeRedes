@@ -163,8 +163,8 @@ public class RegisterAccount {
             AbstractXMPPConnection connection = new XMPPTCPConnection(config);
 
             try {
-                connection.connect();  // Conectar al servidor
-                connection.login(username, password);  // Iniciar sesión
+                connection.connect();  
+                connection.login(username, password);  
                 System.out.println("Sesión iniciada exitosamente");
 
                 ChatManager chatManager = ChatManager.getInstanceFor(connection);
@@ -177,12 +177,12 @@ public class RegisterAccount {
 
                 System.out.println("Mensaje enviado a " + destinatario);
 
-                // Añadir el listener para mensajes entrantes
+      
                 chatManager.addIncomingListener((from, incomingMessage, chat1) -> {
                     System.out.println("Mensaje recibido de " + from + ": " + incomingMessage.getBody());
                 });
 
-                // Mantener la conexión abierta para recibir mensajes
+       
                 System.out.println("Presione Enter para cerrar la sesión...");
                 new Scanner(System.in).nextLine();
 
