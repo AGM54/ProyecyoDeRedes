@@ -120,7 +120,7 @@ public class RegisterAccount {
                     if (connection != null && connection.isAuthenticated()) {
                         mostrarUsuariosConectados();
                     } else {
-                        System.out.println("Debe iniciar sesión antes de mostrar todos los usuarios conectados.");
+                        System.out.println("Debe iniciar sesión antes de mostrar todos los usuarios conectados y sus mensajes de presencia.");
                         System.out.println("Ingrese el nombre de usuario:");
                         username = scanner.nextLine();
                         System.out.println("Ingrese la contraseña:");
@@ -131,18 +131,7 @@ public class RegisterAccount {
                     }
                     break;
                 case 10:
-                    if (connection != null && connection.isAuthenticated()) {
-                        definirMensajePresencia();
-                    } else {
-                        System.out.println("Debe iniciar sesión antes de definir un mensaje de presencia.");
-                        System.out.println("Ingrese el nombre de usuario:");
-                        username = scanner.nextLine();
-                        System.out.println("Ingrese la contraseña:");
-                        password = scanner.nextLine();
-                        if (iniciarSesion(domain, username, password)) {
-                            definirMensajePresencia();
-                        }
-                    }
+                    definirMensajePresencia();
                     break;
                 default:
                     System.out.println("Opción no válida.");
@@ -348,7 +337,7 @@ public class RegisterAccount {
                     Presence presence = roster.getPresence(entry.getJid());
                     String status = presence.isAvailable() ? "Conectado" : "Desconectado";
                     String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    System.out.println(entry.getJid() + " - " + status + " (" + presenceMessage + ")");
+                    System.out.println(entry.getJid() + " - " + status + " - Mensaje de presencia: " + presenceMessage);
                 }
             } catch (Exception e) {
                 System.out.println("Error al obtener la lista de contactos: " + e.getMessage());
@@ -367,12 +356,10 @@ public class RegisterAccount {
                 System.out.println("Usuarios conectados:");
                 for (RosterEntry entry : entries) {
                     Presence presence = roster.getPresence(entry.getJid());
-                    if (presence.isAvailable()) {
-                        String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                        System.out.println(entry.getJid() + " está conectado (" + presenceMessage + ")");
-                    } else {
-                        System.out.println(entry.getJid() + " está desconectado");
-                    }
+                    String presenceMessage = presence.isAvailable() ? "Conectado" : "Desconectado";
+                    System.out.println(entry.getJid() + " está " + presenceMessage);
+                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                    System.out.println("Mensaje de presencia: " + statusMessage);
                 }
             } catch (Exception e) {
                 System.out.println("Error al obtener la lista de usuarios conectados: " + e.getMessage());
@@ -388,13 +375,11 @@ public class RegisterAccount {
             try {
                 Scanner scanner = new Scanner(System.in);
                 System.out.println("Ingrese su mensaje de presencia:");
-                String mensajePresencia = scanner.nextLine();
-
+                String mensaje = scanner.nextLine();
                 Presence presence = new Presence(Presence.Type.available);
-                presence.setStatus(mensajePresencia);
+                presence.setStatus(mensaje);
                 connection.sendStanza(presence);
-
-                System.out.println("Mensaje de presencia actualizado a: " + mensajePresencia);
+                System.out.println("Mensaje de presencia actualizado.");
             } catch (Exception e) {
                 System.out.println("Error al definir el mensaje de presencia: " + e.getMessage());
                 e.printStackTrace();
