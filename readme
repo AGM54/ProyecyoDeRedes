@@ -2,3 +2,4 @@ mvn install
 mvn clean install
 Powershell
  mvn exec:java '-Dexec.mainClass="com.example.RegisterAccount"
+ mvn exec:java '-Dexec.mainClass="com.example.RegisterAccount"'
