@@ -50,7 +50,7 @@ public class RegisterAccount extends Application {
         primaryStage.setTitle("XMPP Client");
 
         // Load the background image
-        Image backgroundImage = new Image(getClass().getResourceAsStream("/robot.jpg"));
+        Image backgroundImage = new Image(getClass().getResourceAsStream("/inicio.jpg"));
         ImageView backgroundImageView = new ImageView(backgroundImage);
         backgroundImageView.setFitWidth(400); // Ajusta el ancho de la imagen según sea necesario
         backgroundImageView.setFitHeight(400); // Ajusta la altura de la imagen según sea necesario
@@ -77,6 +77,7 @@ public class RegisterAccount extends Application {
 
         StackPane loginRoot = new StackPane();
         loginRoot.getChildren().add(loginHBox);
+        
 
         Scene loginScene = new Scene(loginRoot, 800, 600);
         loginScene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
@@ -107,10 +108,10 @@ public class RegisterAccount extends Application {
 
     private void showMainMenu(Stage primaryStage) {
         // Load the background image
-        Image backgroundImage = new Image(getClass().getResourceAsStream("/robot.jpg"));
+        Image backgroundImage = new Image(getClass().getResourceAsStream("/inicio.jpg"));
         ImageView backgroundImageView = new ImageView(backgroundImage);
-        backgroundImageView.setFitWidth(200); // Ajusta el ancho de la imagen según sea necesario
-        backgroundImageView.setFitHeight(200); // Ajusta la altura de la imagen según sea necesario
+        backgroundImageView.setFitWidth(400); // Ajusta el ancho de la imagen según sea necesario
+        backgroundImageView.setFitHeight(400); // Ajusta la altura de la imagen según sea necesario
         backgroundImageView.setPreserveRatio(true);
 
         // Create UI components
@@ -118,55 +119,96 @@ public class RegisterAccount extends Application {
         vbox.setPadding(new Insets(20));
         vbox.setStyle("-fx-background-color: white;");
 
-        Label label = new Label("Seleccione una opción:");
-        Button registerButton = new Button("Registrar nueva cuenta");
-        Button sendMessageButton = new Button("Enviar mensaje a un usuario");
-        Button chatButton = new Button("Chat en tiempo real");
-        Button logoutButton = new Button("Cerrar sesión");
-        Button deleteAccountButton = new Button("Eliminar cuenta del servidor");
-        Button exitButton = new Button("Salir");
-        Button addContactButton = new Button("Agregar un contacto");
-        Button viewContactsButton = new Button("Ver contactos");
-        Button showUsersButton = new Button("Mostrar todos los usuarios conectados y sus mensajes de presencia");
-        Button setPresenceButton = new Button("Definir mensaje de presencia");
+        HBox buttonBox = new HBox(10);
+        buttonBox.setPadding(new Insets(20));
 
-        // Notification bell
-        Image bellImage = new Image(getClass().getResourceAsStream("/bell.png"));
-        ImageView bellImageView = new ImageView(bellImage);
-        bellImageView.setFitWidth(30); // Adjust as necessary
-        bellImageView.setFitHeight(30); // Adjust as necessary
-        bellImageView.setPreserveRatio(true);
-        bellImageView.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> showNotifications(primaryStage));
+        // Button for Mensajería
+        Button messagingButton = new Button("Mensajería");
+        messagingButton.setPrefSize(400, 100); // Adjust size as needed
+        messagingButton.setOnAction(e -> showMessagingOptions(primaryStage));
 
-        vbox.getChildren().addAll(label, registerButton, sendMessageButton, chatButton, logoutButton,
-                deleteAccountButton, exitButton, addContactButton, viewContactsButton, showUsersButton, setPresenceButton, bellImageView);
+        // Button for Contactos
+        Button contactsButton = new Button("Contactos");
+        contactsButton.setPrefSize(200, 100); // Adjust size as needed
+        contactsButton.setOnAction(e -> showContactOptions(primaryStage));
 
-        // Create HBox to contain VBox and ImageView
-        HBox hbox = new HBox(20); // Espacio entre VBox e ImageView
-        hbox.setPadding(new Insets(20));
-        hbox.getChildren().addAll(vbox, backgroundImageView);
+        // Button for Account Management
+        Button accountButton = new Button("Cuenta");
+        accountButton.setPrefSize(200, 100); // Adjust size as needed
+        accountButton.setOnAction(e -> showAccountOptions(primaryStage));
+
+        buttonBox.getChildren().addAll(messagingButton, contactsButton, accountButton);
+
+        vbox.getChildren().addAll(backgroundImageView, buttonBox);
 
         StackPane root = new StackPane();
-        root.getChildren().add(hbox);
+        root.getChildren().add(vbox);
 
         Scene scene = new Scene(root, 800, 600);
-
-        // Add the stylesheet
         scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
         primaryStage.setScene(scene);
+    }
 
-        // Add button actions
-        registerButton.setOnAction(e -> registrarCuentaUI());
-        sendMessageButton.setOnAction(e -> enviarMensajeUI());
+    private void showMessagingOptions(Stage primaryStage) {
+        Stage optionsStage = new Stage();
+        optionsStage.setTitle("Opciones de Mensajería");
+
+        VBox optionsBox = new VBox(10);
+        optionsBox.setPadding(new Insets(20));
+
+        Button chatButton = new Button("Chat en tiempo real");
         chatButton.setOnAction(e -> iniciarChatUI(primaryStage));
-        logoutButton.setOnAction(e -> cerrarSesion());
-        deleteAccountButton.setOnAction(e -> eliminarCuentaUI());
-        exitButton.setOnAction(e -> primaryStage.close());
-        addContactButton.setOnAction(e -> agregarContactoUI());
-        viewContactsButton.setOnAction(e -> verContactos());
+        Button sendMessageButton = new Button("Enviar mensaje a un usuario");
+        sendMessageButton.setOnAction(e -> enviarMensajeUI());
+
+        optionsBox.getChildren().addAll(chatButton, sendMessageButton);
+
+        Scene optionsScene = new Scene(optionsBox, 300, 200);
+        optionsStage.setScene(optionsScene);
+        optionsStage.show();
+    }
+
+    private void showContactOptions(Stage primaryStage) {
+        Stage optionsStage = new Stage();
+        optionsStage.setTitle("Opciones de Contactos");
+
+        VBox optionsBox = new VBox(10);
+        optionsBox.setPadding(new Insets(20));
+
+        Button showUsersButton = new Button("Mostrar todos los usuarios conectados y su mensaje de presencia");
         showUsersButton.setOnAction(e -> mostrarUsuariosConectados());
-        setPresenceButton.setOnAction(e -> definirMensajePresencia());
+        Button viewContactsButton = new Button("Ver contactos");
+        viewContactsButton.setOnAction(e -> verContactos());
+        Button addContactButton = new Button("Agregar un contacto");
+        addContactButton.setOnAction(e -> agregarContactoUI());
+
+        optionsBox.getChildren().addAll(showUsersButton, viewContactsButton, addContactButton);
+
+        Scene optionsScene = new Scene(optionsBox, 400, 200);
+        optionsStage.setScene(optionsScene);
+        optionsStage.show();
+    }
+
+    private void showAccountOptions(Stage primaryStage) {
+        Stage optionsStage = new Stage();
+        optionsStage.setTitle("Opciones de Cuenta");
+
+        VBox optionsBox = new VBox(10);
+        optionsBox.setPadding(new Insets(20));
+
+        Button registerButton = new Button("Registrar nueva cuenta");
+        registerButton.setOnAction(e -> registrarCuentaUI());
+        Button deleteAccountButton = new Button("Eliminar cuenta del servidor");
+        deleteAccountButton.setOnAction(e -> eliminarCuentaUI());
+        Button logoutButton = new Button("Cerrar sesión");
+        logoutButton.setOnAction(e -> cerrarSesion());
+
+        optionsBox.getChildren().addAll(registerButton, deleteAccountButton, logoutButton);
+
+        Scene optionsScene = new Scene(optionsBox, 300, 200);
+        optionsStage.setScene(optionsScene);
+        optionsStage.show();
     }
 
     private void iniciarChatUI(Stage primaryStage) {
