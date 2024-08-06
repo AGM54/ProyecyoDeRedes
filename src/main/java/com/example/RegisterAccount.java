@@ -1,17 +1,18 @@
 package com.example;
 
-import org.jivesoftware.smack.AbstractXMPPConnection;
-import org.jivesoftware.smack.ConnectionConfiguration;
-import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.XMPPException;
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.chat2.Chat;
 import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smack.roster.Roster;
-import org.jivesoftware.smack.roster.RosterEntry;
-import org.jivesoftware.smack.roster.RosterListener;
-import org.jivesoftware.smack.roster.SubscribeListener;
+import org.jivesoftware.smack.roster.*;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.DNSUtil;
@@ -25,140 +26,112 @@ import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Scanner;
 
-public class RegisterAccount {
+public class RegisterAccount extends Application {
 
     private static AbstractXMPPConnection connection;
+    private TextArea logArea;
+    private TextField userField;
+    private PasswordField passField;
+    private TextField recipientField;
+    private TextArea messageField;
+    private TextField contactField;
+    private TextField statusField;
+    private String domain = "alumchat.lol";
 
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        String domain = "alumchat.lol";
-        boolean running = true;
-
-        while (running) {
-            System.out.println("Seleccione una opción:");
-            System.out.println("1. Registrar nueva cuenta");
-            System.out.println("2. Iniciar sesión con cuenta existente");
-            System.out.println("3. Enviar mensaje a un usuario");
-            System.out.println("4. Cerrar sesión");
-            System.out.println("5. Eliminar cuenta del servidor");
-            System.out.println("6. Salir");
-            System.out.println("7. Agregar un contacto");
-            System.out.println("8. Ver contactos");
-            System.out.println("9. Mostrar todos los usuarios conectados y sus mensajes de presencia");
-            System.out.println("10. Definir mensaje de presencia");
-            int opcion = scanner.nextInt();
-            scanner.nextLine();  // Consume newline
-
-            String username, password, mensaje, destinatario;
-
-            switch (opcion) {
-                case 1:
-                    System.out.println("Ingrese el nombre de usuario para registrar:");
-                    username = scanner.nextLine();
-                    System.out.println("Ingrese la contraseña:");
-                    password = scanner.nextLine();
-                    registrarCuenta(domain, username, password);
-                    break;
-                case 2:
-                    System.out.println("Ingrese el nombre de usuario:");
-                    username = scanner.nextLine();
-                    System.out.println("Ingrese la contraseña:");
-                    password = scanner.nextLine();
-                    if (iniciarSesion(domain, username, password)) {
-                        // Iniciar el listener de presencia si la sesión se inició exitosamente
-                        agregarPresenceListener();
-                        agregarSubscribeListener();
-                    }
-                    break;
-                case 3:
-                    System.out.println("Ingrese el nombre de usuario:");
-                    username = scanner.nextLine();
-                    System.out.println("Ingrese la contraseña:");
-                    password = scanner.nextLine();
-                    System.out.println("Ingrese el JID del destinatario:");
-                    destinatario = scanner.nextLine();
-                    System.out.println("Ingrese el mensaje:");
-                    mensaje = scanner.nextLine();
-                    enviarMensaje(domain, username, password, destinatario, mensaje);
-                    break;
-                case 4:
-                    cerrarSesion();
-                    break;
-                case 5:
-                    System.out.println("Ingrese el nombre de usuario:");
-                    username = scanner.nextLine();
-                    System.out.println("Ingrese la contraseña:");
-                    password = scanner.nextLine();
-                    eliminarCuenta(domain, username, password);
-                    break;
-                case 6:
-                    running = false;
-                    System.out.println("Saliendo...");
-                    break;
-                case 7:
-                    if (connection != null && connection.isAuthenticated()) {
-                        System.out.println("Ingrese el nombre de usuario del contacto a agregar:");
-                        String contacto = scanner.nextLine();
-                        agregarContacto(contacto + "@" + domain);
-                    } else {
-                        System.out.println("Debe iniciar sesión antes de agregar un contacto.");
-                        System.out.println("Ingrese el nombre de usuario:");
-                        username = scanner.nextLine();
-                        System.out.println("Ingrese la contraseña:");
-                        password = scanner.nextLine();
-                        if (iniciarSesion(domain, username, password)) {
-                            System.out.println("Ingrese el nombre de usuario del contacto a agregar:");
-                            String contacto = scanner.nextLine();
-                            agregarContacto(contacto + "@" + domain);
-                        }
-                    }
-                    break;
-                case 8:
-                    if (connection != null && connection.isAuthenticated()) {
-                        verContactos();
-                    } else {
-                        System.out.println("Debe iniciar sesión antes de ver los contactos.");
-                        System.out.println("Ingrese el nombre de usuario:");
-                        username = scanner.nextLine();
-                        System.out.println("Ingrese la contraseña:");
-                        password = scanner.nextLine();
-                        if (iniciarSesion(domain, username, password)) {
-                            verContactos();
-                        }
-                    }
-                    break;
-                case 9:
-                    if (connection != null && connection.isAuthenticated()) {
-                        mostrarUsuariosConectados();
-                    } else {
-                        System.out.println("Debe iniciar sesión antes de mostrar todos los usuarios conectados y sus mensajes de presencia.");
-                        System.out.println("Ingrese el nombre de usuario:");
-                        username = scanner.nextLine();
-                        System.out.println("Ingrese la contraseña:");
-                        password = scanner.nextLine();
-                        if (iniciarSesion(domain, username, password)) {
-                            mostrarUsuariosConectados();
-                        }
-                    }
-                    break;
-                case 10:
-                    definirMensajePresencia();
-                    break;
-                default:
-                    System.out.println("Opción no válida.");
-            }
-        }
-        scanner.close();
-        cerrarSesion(); // Cerrar sesión al salir del bucle
+        launch(args);
     }
 
-    public static void registrarCuenta(String domain, String username, String password) {
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("XMPP Client");
+
+        // Create UI elements
+        userField = new TextField();
+        passField = new PasswordField();
+        recipientField = new TextField();
+        messageField = new TextArea();
+        contactField = new TextField();
+        statusField = new TextField();
+        logArea = new TextArea();
+        logArea.setEditable(false);
+
+        Button registerButton = new Button("Registrar nueva cuenta");
+        registerButton.setOnAction(e -> registrarCuenta());
+
+        Button loginButton = new Button("Iniciar sesión");
+        loginButton.setOnAction(e -> iniciarSesion());
+
+        Button sendButton = new Button("Enviar mensaje");
+        sendButton.setOnAction(e -> enviarMensaje());
+
+        Button addContactButton = new Button("Agregar contacto");
+        addContactButton.setOnAction(e -> agregarContacto());
+
+        Button viewContactsButton = new Button("Ver contactos");
+        viewContactsButton.setOnAction(e -> verContactos());
+
+        Button setPresenceButton = new Button("Definir presencia");
+        setPresenceButton.setOnAction(e -> definirMensajePresencia());
+
+        Button deleteAccountButton = new Button("Eliminar cuenta");
+        deleteAccountButton.setOnAction(e -> eliminarCuenta());
+
+        Button logoutButton = new Button("Cerrar sesión");
+        logoutButton.setOnAction(e -> cerrarSesion());
+
+        Button viewStatusButton = new Button("Mostrar estado");
+        viewStatusButton.setOnAction(e -> mostrarUsuariosConectados());
+
+        // Layout
+        GridPane grid = new GridPane();
+        grid.setPadding(new Insets(10, 10, 10, 10));
+        grid.setVgap(8);
+        grid.setHgap(10);
+
+        // Adding UI elements to layout
+        grid.add(new Label("Usuario:"), 0, 0);
+        grid.add(userField, 1, 0);
+        grid.add(new Label("Contraseña:"), 0, 1);
+        grid.add(passField, 1, 1);
+        grid.add(registerButton, 2, 0);
+        grid.add(loginButton, 2, 1);
+
+        grid.add(new Label("Destinatario:"), 0, 2);
+        grid.add(recipientField, 1, 2);
+        grid.add(new Label("Mensaje:"), 0, 3);
+        grid.add(messageField, 1, 3);
+        grid.add(sendButton, 2, 3);
+
+        grid.add(new Label("Contacto:"), 0, 4);
+        grid.add(contactField, 1, 4);
+        grid.add(addContactButton, 2, 4);
+
+        grid.add(new Label("Estado:"), 0, 5);
+        grid.add(statusField, 1, 5);
+        grid.add(setPresenceButton, 2, 5);
+        grid.add(viewContactsButton, 2, 6);
+        grid.add(viewStatusButton, 2, 7);
+        grid.add(deleteAccountButton, 2, 8);
+        grid.add(logoutButton, 2, 9);
+
+        VBox layout = new VBox(10);
+        layout.setPadding(new Insets(10, 10, 10, 10));
+        layout.getChildren().addAll(grid, new Label("Log:"), logArea);
+
+        Scene scene = new Scene(layout, 600, 800);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void registrarCuenta() {
+        String username = userField.getText();
+        String password = passField.getText();
+
         try {
             Localpart localpart = Localpart.from(username);
 
-            // Configurar el DNS resolver
             DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
 
             XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
@@ -170,77 +143,31 @@ public class RegisterAccount {
 
             connection = new XMPPTCPConnection(config);
 
-            try {
-                connection.connect();  // Conectar al servidor
-                System.out.println("Conectado al servidor");
+            connection.connect();
+            logArea.appendText("Conectado al servidor\n");
 
-                AccountManager accountManager = AccountManager.getInstance(connection);
-                accountManager.sensitiveOperationOverInsecureConnection(true);
+            AccountManager accountManager = AccountManager.getInstance(connection);
+            accountManager.sensitiveOperationOverInsecureConnection(true);
 
-                if (accountManager.supportsAccountCreation()) {
-                    accountManager.createAccount(localpart, password);
-                    System.out.println("Cuenta registrada exitosamente");
-                } else {
-                    System.out.println("El servidor no soporta la creación de cuentas");
-                }
-
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                connection.disconnect();
+            if (accountManager.supportsAccountCreation()) {
+                accountManager.createAccount(localpart, password);
+                logArea.appendText("Cuenta registrada exitosamente\n");
+            } else {
+                logArea.appendText("El servidor no soporta la creación de cuentas\n");
             }
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
-        }
-    }
+            connection.disconnect();
 
-    public static boolean iniciarSesion(String domain, String username, String password) {
-        try {
-            // Configurar el DNS resolver
-            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
-
-            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                    .setXmppDomain(domain)
-                    .setHost(domain)
-                    .setPort(5222)
-                    .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
-                    .build();
-
-            connection = new XMPPTCPConnection(config);
-
-            try {
-                connection.connect();  // Conectar al servidor
-                connection.login(username, password);  // Iniciar sesión
-                System.out.println("Sesión iniciada exitosamente");
-
-                // Añadir el listener para mensajes entrantes
-                ChatManager chatManager = ChatManager.getInstanceFor(connection);
-                chatManager.addIncomingListener((from, message, chat) -> {
-                    System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
-                });
-
-                // Añadir listener para cambios en la presencia
-                agregarPresenceListener();
-
-                // Añadir listener para suscripciones
-                agregarSubscribeListener();
-
-                return true;
-
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                System.out.println("Error al iniciar sesión: " + e.getMessage());
-                e.printStackTrace();
-                return false;
-            }
         } catch (Exception e) {
+            logArea.appendText("Error al registrar cuenta: " + e.getMessage() + "\n");
             e.printStackTrace();
-            return false;
         }
     }
 
-    public static void enviarMensaje(String domain, String username, String password, String destinatario, String mensaje) {
+    private void iniciarSesion() {
+        String username = userField.getText();
+        String password = passField.getText();
+
         try {
-            // Configurar el DNS resolver
             DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
 
             XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
@@ -252,53 +179,140 @@ public class RegisterAccount {
 
             connection = new XMPPTCPConnection(config);
 
-            try {
-                connection.connect();  // Conectar al servidor
-                connection.login(username, password);  // Iniciar sesión
-                System.out.println("Sesión iniciada exitosamente");
+            connection.connect();
+            connection.login(username, password);
+            logArea.appendText("Sesión iniciada exitosamente\n");
 
-                ChatManager chatManager = ChatManager.getInstanceFor(connection);
+            ChatManager chatManager = ChatManager.getInstanceFor(connection);
+            chatManager.addIncomingListener((from, message, chat) -> {
+                logArea.appendText("Mensaje recibido de " + from + ": " + message.getBody() + "\n");
+            });
+
+            agregarPresenceListener();
+            agregarSubscribeListener();
+
+        } catch (Exception e) {
+            logArea.appendText("Error al iniciar sesión: " + e.getMessage() + "\n");
+            e.printStackTrace();
+        }
+    }
+
+    private void enviarMensaje() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                String destinatario = recipientField.getText();
+                String mensaje = messageField.getText();
                 EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
+                ChatManager chatManager = ChatManager.getInstanceFor(connection);
                 Chat chat = chatManager.chatWith(jid);
 
                 Message message = new Message(jid, Message.Type.chat);
                 message.setBody(mensaje);
                 chat.send(message);
 
-                System.out.println("Mensaje enviado a " + destinatario);
+                logArea.appendText("Mensaje enviado a " + destinatario + "\n");
 
-                // Añadir el listener para mensajes entrantes
-                chatManager.addIncomingListener((from, incomingMessage, chat1) -> {
-                    System.out.println("Mensaje recibido de " + from + ": " + incomingMessage.getBody());
-                });
-
-                // Mantener la conexión abierta para recibir mensajes
-                System.out.println("Presione Enter para cerrar la sesión...");
-                new Scanner(System.in).nextLine();
-
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                System.out.println("Error al enviar mensaje: " + e.getMessage());
+            } catch (Exception e) {
+                logArea.appendText("Error al enviar mensaje: " + e.getMessage() + "\n");
                 e.printStackTrace();
-            } finally {
-                connection.disconnect();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void cerrarSesion() {
-        if (connection != null && connection.isConnected()) {
-            connection.disconnect();
-            System.out.println("Sesión cerrada exitosamente.");
         } else {
-            System.out.println("No hay ninguna sesión activa.");
+            logArea.appendText("Debe iniciar sesión antes de enviar un mensaje.\n");
         }
     }
 
-    public static void eliminarCuenta(String domain, String username, String password) {
+    private void agregarContacto() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                String contacto = contactField.getText();
+                EntityBareJid jid = JidCreate.entityBareFrom(contacto);
+                Roster roster = Roster.getInstanceFor(connection);
+                roster.createEntry(jid, contacto, null);
+                logArea.appendText("Contacto agregado exitosamente.\n");
+
+                Presence subscribe = new Presence(Presence.Type.subscribe);
+                subscribe.setTo(jid);
+                connection.sendStanza(subscribe);
+
+            } catch (Exception e) {
+                logArea.appendText("Error al agregar contacto: " + e.getMessage() + "\n");
+                e.printStackTrace();
+            }
+        } else {
+            logArea.appendText("Debe iniciar sesión antes de agregar un contacto.\n");
+        }
+    }
+
+    private void verContactos() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                Roster roster = Roster.getInstanceFor(connection);
+                Collection<RosterEntry> entries = roster.getEntries();
+                logArea.appendText("Contactos:\n");
+                for (RosterEntry entry : entries) {
+                    Presence presence = roster.getPresence(entry.getJid());
+                    String status = presence.isAvailable() ? "Conectado" : "Desconectado";
+                    String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                    logArea.appendText(entry.getJid() + " - " + status + " - Mensaje de presencia: " + presenceMessage + "\n");
+                }
+            } catch (Exception e) {
+                logArea.appendText("Error al obtener la lista de contactos: " + e.getMessage() + "\n");
+                e.printStackTrace();
+            }
+        } else {
+            logArea.appendText("Debe iniciar sesión antes de ver los contactos.\n");
+        }
+    }
+
+    private void mostrarUsuariosConectados() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                Roster roster = Roster.getInstanceFor(connection);
+                Collection<RosterEntry> entries = roster.getEntries();
+                logArea.appendText("Usuarios:\n");
+                for (RosterEntry entry : entries) {
+                    Presence presence = roster.getPresence(entry.getJid());
+                    String presenceMessage = presence.isAvailable() ? "Conectado" : "Desconectado";
+                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                    logArea.appendText(entry.getJid() + " está " + presenceMessage + " - Mensaje de presencia: " + statusMessage + "\n");
+                }
+
+                Presence ownPresence = roster.getPresence(connection.getUser().asBareJid());
+                String ownPresenceMessage = ownPresence.isAvailable() ? "Conectado" : "Desconectado";
+                String ownStatusMessage = ownPresence.getStatus() != null ? ownPresence.getStatus() : "Sin mensaje de presencia";
+                logArea.appendText(connection.getUser().asBareJid() + " está " + ownPresenceMessage + " - Mensaje de presencia: " + ownStatusMessage + "\n");
+
+            } catch (Exception e) {
+                logArea.appendText("Error al obtener la lista de usuarios conectados: " + e.getMessage() + "\n");
+                e.printStackTrace();
+            }
+        } else {
+            logArea.appendText("Debe iniciar sesión antes de mostrar todos los usuarios conectados y sus mensajes de presencia.\n");
+        }
+    }
+
+    private void definirMensajePresencia() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                String mensaje = statusField.getText();
+                Presence presence = new Presence(Presence.Type.available);
+                presence.setStatus(mensaje);
+                connection.sendStanza(presence);
+                logArea.appendText("Mensaje de presencia actualizado.\n");
+            } catch (Exception e) {
+                logArea.appendText("Error al definir el mensaje de presencia: " + e.getMessage() + "\n");
+                e.printStackTrace();
+            }
+        } else {
+            logArea.appendText("Debe iniciar sesión antes de definir el mensaje de presencia.\n");
+        }
+    }
+
+    private void eliminarCuenta() {
+        String username = userField.getText();
+        String password = passField.getText();
+
         try {
-            // Configurar el DNS resolver
             DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
 
             XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
@@ -310,111 +324,31 @@ public class RegisterAccount {
 
             connection = new XMPPTCPConnection(config);
 
-            try {
-                connection.connect();  // Conectar al servidor
-                connection.login(username, password);  // Iniciar sesión
-                System.out.println("Sesión iniciada exitosamente");
+            connection.connect();
+            connection.login(username, password);
+            logArea.appendText("Sesión iniciada exitosamente\n");
 
-                AccountManager accountManager = AccountManager.getInstance(connection);
-                accountManager.deleteAccount();
-                System.out.println("Cuenta eliminada exitosamente.");
+            AccountManager accountManager = AccountManager.getInstance(connection);
+            accountManager.deleteAccount();
+            logArea.appendText("Cuenta eliminada exitosamente.\n");
+            connection.disconnect();
 
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                System.out.println("Error al eliminar la cuenta: " + e.getMessage());
-                e.printStackTrace();
-            } finally {
-                connection.disconnect();
-            }
         } catch (Exception e) {
+            logArea.appendText("Error al eliminar la cuenta: " + e.getMessage() + "\n");
             e.printStackTrace();
         }
     }
 
-    public static void agregarContacto(String jidStr) {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                EntityBareJid jid = JidCreate.entityBareFrom(jidStr);
-                Roster roster = Roster.getInstanceFor(connection);
-                roster.createEntry(jid, jidStr, null);
-                System.out.println("Contacto agregado exitosamente.");
-            } catch (Exception e) {
-                System.out.println("Error al agregar contacto: " + e.getMessage());
-                e.printStackTrace();
-            }
+    private void cerrarSesion() {
+        if (connection != null && connection.isConnected()) {
+            connection.disconnect();
+            logArea.appendText("Sesión cerrada exitosamente.\n");
         } else {
-            System.out.println("No has iniciado sesión.");
+            logArea.appendText("No hay ninguna sesión activa.\n");
         }
     }
 
-    public static void verContactos() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                Roster roster = Roster.getInstanceFor(connection);
-                Collection<RosterEntry> entries = roster.getEntries();
-                System.out.println("Contactos:");
-                for (RosterEntry entry : entries) {
-                    Presence presence = roster.getPresence(entry.getJid());
-                    String status = presence.isAvailable() ? "Conectado" : "Desconectado";
-                    String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    System.out.println(entry.getJid() + " - " + status + " - Mensaje de presencia: " + presenceMessage);
-                }
-            } catch (Exception e) {
-                System.out.println("Error al obtener la lista de contactos: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("No has iniciado sesión.");
-        }
-    }
-
-    public static void mostrarUsuariosConectados() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                Roster roster = Roster.getInstanceFor(connection);
-                Collection<RosterEntry> entries = roster.getEntries();
-                System.out.println("Usuarios:");
-                for (RosterEntry entry : entries) {
-                    Presence presence = roster.getPresence(entry.getJid());
-                    String presenceMessage = presence.isAvailable() ? "Conectado" : "Desconectado";
-                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    System.out.println(entry.getJid() + " está " + presenceMessage + " - Mensaje de presencia: " + statusMessage);
-                }
-                
-                // Mostrar tu propio estado y mensaje de presencia
-                Presence ownPresence = roster.getPresence(connection.getUser().asBareJid());
-                String ownPresenceMessage = ownPresence.isAvailable() ? "Conectado" : "Desconectado";
-                String ownStatusMessage = ownPresence.getStatus() != null ? ownPresence.getStatus() : "Sin mensaje de presencia";
-                System.out.println(connection.getUser().asBareJid() + " está " + ownPresenceMessage + " - Mensaje de presencia: " + ownStatusMessage);
-
-            } catch (Exception e) {
-                System.out.println("Error al obtener la lista de usuarios conectados: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("No has iniciado sesión.");
-        }
-    }
-
-    public static void definirMensajePresencia() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                Scanner scanner = new Scanner(System.in);
-                System.out.println("Ingrese su mensaje de presencia:");
-                String mensaje = scanner.nextLine();
-                Presence presence = new Presence(Presence.Type.available);
-                presence.setStatus(mensaje);
-                connection.sendStanza(presence);
-                System.out.println("Mensaje de presencia actualizado.");
-            } catch (Exception e) {
-                System.out.println("Error al definir el mensaje de presencia: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("No has iniciado sesión.");
-        }
-    }
-
-    private static void agregarPresenceListener() {
+    private void agregarPresenceListener() {
         Roster roster = Roster.getInstanceFor(connection);
         roster.addRosterListener(new RosterListener() {
             @Override
@@ -429,12 +363,12 @@ public class RegisterAccount {
             @Override
             public void presenceChanged(Presence presence) {
                 String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+                logArea.appendText("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage + "\n");
             }
         });
     }
 
-    private static void agregarSubscribeListener() {
+    private void agregarSubscribeListener() {
         Roster roster = Roster.getInstanceFor(connection);
         roster.addSubscribeListener((from, subscribeRequest) -> {
             try {
@@ -450,4 +384,3 @@ public class RegisterAccount {
         });
     }
 }
-
