@@ -4,8 +4,9 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.chat2.Chat;
@@ -26,18 +27,10 @@ import org.jxmpp.stringprep.XmppStringprepException;
 
 import java.io.IOException;
 import java.util.Collection;
-
+import java.util.Scanner;
 public class RegisterAccount extends Application {
 
     private static AbstractXMPPConnection connection;
-    private TextArea logArea;
-    private TextField userField;
-    private PasswordField passField;
-    private TextField recipientField;
-    private TextArea messageField;
-    private TextField contactField;
-    private TextField statusField;
-    private String domain = "alumchat.lol";
 
     public static void main(String[] args) {
         launch(args);
@@ -47,91 +40,141 @@ public class RegisterAccount extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("XMPP Client");
 
-        // Create UI elements
-        userField = new TextField();
-        passField = new PasswordField();
-        recipientField = new TextField();
-        messageField = new TextArea();
-        contactField = new TextField();
-        statusField = new TextField();
-        logArea = new TextArea();
-        logArea.setEditable(false);
+        // Load the background image
+        Image backgroundImage = new Image(getClass().getResourceAsStream("/robot.jpg"));
+        ImageView backgroundImageView = new ImageView(backgroundImage);
+        backgroundImageView.setFitWidth(200); // Ajusta el ancho de la imagen según sea necesario
+        backgroundImageView.setFitHeight(200); // Ajusta la altura de la imagen según sea necesario
+        backgroundImageView.setPreserveRatio(true);
 
+        // Create UI components
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(20));
+        vbox.setStyle("-fx-background-color: white;");
+
+        Label label = new Label("Seleccione una opción:");
         Button registerButton = new Button("Registrar nueva cuenta");
-        registerButton.setOnAction(e -> registrarCuenta());
-
-        Button loginButton = new Button("Iniciar sesión");
-        loginButton.setOnAction(e -> iniciarSesion());
-
-        Button sendButton = new Button("Enviar mensaje");
-        sendButton.setOnAction(e -> enviarMensaje());
-
-        Button addContactButton = new Button("Agregar contacto");
-        addContactButton.setOnAction(e -> agregarContacto());
-
-        Button viewContactsButton = new Button("Ver contactos");
-        viewContactsButton.setOnAction(e -> verContactos());
-
-        Button setPresenceButton = new Button("Definir presencia");
-        setPresenceButton.setOnAction(e -> definirMensajePresencia());
-
-        Button deleteAccountButton = new Button("Eliminar cuenta");
-        deleteAccountButton.setOnAction(e -> eliminarCuenta());
-
+        Button loginButton = new Button("Iniciar sesión con cuenta existente");
+        Button sendMessageButton = new Button("Enviar mensaje a un usuario");
         Button logoutButton = new Button("Cerrar sesión");
-        logoutButton.setOnAction(e -> cerrarSesion());
+        Button deleteAccountButton = new Button("Eliminar cuenta del servidor");
+        Button exitButton = new Button("Salir");
+        Button addContactButton = new Button("Agregar un contacto");
+        Button viewContactsButton = new Button("Ver contactos");
+        Button showUsersButton = new Button("Mostrar todos los usuarios conectados y sus mensajes de presencia");
+        Button setPresenceButton = new Button("Definir mensaje de presencia");
 
-        Button viewStatusButton = new Button("Mostrar estado");
-        viewStatusButton.setOnAction(e -> mostrarUsuariosConectados());
+        vbox.getChildren().addAll(label, registerButton, loginButton, sendMessageButton, logoutButton,
+                deleteAccountButton, exitButton, addContactButton, viewContactsButton, showUsersButton, setPresenceButton);
 
-        // Layout
-        GridPane grid = new GridPane();
-        grid.setPadding(new Insets(10, 10, 10, 10));
-        grid.setVgap(8);
-        grid.setHgap(10);
+        // Create HBox to contain VBox and ImageView
+        HBox hbox = new HBox(20); // Espacio entre VBox e ImageView
+        hbox.setPadding(new Insets(20));
+        hbox.getChildren().addAll(vbox, backgroundImageView);
 
-        // Adding UI elements to layout
-        grid.add(new Label("Usuario:"), 0, 0);
-        grid.add(userField, 1, 0);
-        grid.add(new Label("Contraseña:"), 0, 1);
-        grid.add(passField, 1, 1);
-        grid.add(registerButton, 2, 0);
-        grid.add(loginButton, 2, 1);
+        StackPane root = new StackPane();
+        root.getChildren().add(hbox);
 
-        grid.add(new Label("Destinatario:"), 0, 2);
-        grid.add(recipientField, 1, 2);
-        grid.add(new Label("Mensaje:"), 0, 3);
-        grid.add(messageField, 1, 3);
-        grid.add(sendButton, 2, 3);
+        Scene scene = new Scene(root, 800, 600);
 
-        grid.add(new Label("Contacto:"), 0, 4);
-        grid.add(contactField, 1, 4);
-        grid.add(addContactButton, 2, 4);
+        // Add the stylesheet
+        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
-        grid.add(new Label("Estado:"), 0, 5);
-        grid.add(statusField, 1, 5);
-        grid.add(setPresenceButton, 2, 5);
-        grid.add(viewContactsButton, 2, 6);
-        grid.add(viewStatusButton, 2, 7);
-        grid.add(deleteAccountButton, 2, 8);
-        grid.add(logoutButton, 2, 9);
-
-        VBox layout = new VBox(10);
-        layout.setPadding(new Insets(10, 10, 10, 10));
-        layout.getChildren().addAll(grid, new Label("Log:"), logArea);
-
-        Scene scene = new Scene(layout, 600, 800);
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        // Add button actions
+        registerButton.setOnAction(e -> registrarCuentaUI());
+        loginButton.setOnAction(e -> iniciarSesionUI());
+        sendMessageButton.setOnAction(e -> enviarMensajeUI());
+        logoutButton.setOnAction(e -> cerrarSesion());
+        deleteAccountButton.setOnAction(e -> eliminarCuentaUI());
+        exitButton.setOnAction(e -> primaryStage.close());
+        addContactButton.setOnAction(e -> agregarContactoUI());
+        viewContactsButton.setOnAction(e -> verContactos());
+        showUsersButton.setOnAction(e -> mostrarUsuariosConectados());
+        setPresenceButton.setOnAction(e -> definirMensajePresencia());
     }
 
-    private void registrarCuenta() {
-        String username = userField.getText();
-        String password = passField.getText();
 
+    private void registrarCuentaUI() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Registrar nueva cuenta");
+        dialog.setHeaderText("Registrar nueva cuenta");
+        dialog.setContentText("Ingrese el nombre de usuario:");
+
+        dialog.showAndWait().ifPresent(username -> {
+            TextInputDialog passwordDialog = new TextInputDialog();
+            passwordDialog.setTitle("Registrar nueva cuenta");
+            passwordDialog.setHeaderText("Registrar nueva cuenta");
+            passwordDialog.setContentText("Ingrese la contraseña:");
+
+            passwordDialog.showAndWait().ifPresent(password -> registrarCuenta("alumchat.lol", username, password));
+        });
+    }
+
+    private void iniciarSesionUI() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Iniciar sesión");
+        dialog.setHeaderText("Iniciar sesión");
+        dialog.setContentText("Ingrese el nombre de usuario:");
+
+        dialog.showAndWait().ifPresent(username -> {
+            TextInputDialog passwordDialog = new TextInputDialog();
+            passwordDialog.setTitle("Iniciar sesión");
+            passwordDialog.setHeaderText("Iniciar sesión");
+            passwordDialog.setContentText("Ingrese la contraseña:");
+
+            passwordDialog.showAndWait().ifPresent(password -> iniciarSesion("alumchat.lol", username, password));
+        });
+    }
+
+    private void enviarMensajeUI() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Enviar mensaje");
+        dialog.setHeaderText("Enviar mensaje");
+        dialog.setContentText("Ingrese el JID del destinatario:");
+
+        dialog.showAndWait().ifPresent(destinatario -> {
+            TextInputDialog messageDialog = new TextInputDialog();
+            messageDialog.setTitle("Enviar mensaje");
+            messageDialog.setHeaderText("Enviar mensaje");
+            messageDialog.setContentText("Ingrese el mensaje:");
+
+            messageDialog.showAndWait().ifPresent(mensaje -> enviarMensaje("alumchat.lol", "username", "password", destinatario, mensaje));
+        });
+    }
+
+    private void eliminarCuentaUI() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Eliminar cuenta");
+        dialog.setHeaderText("Eliminar cuenta");
+        dialog.setContentText("Ingrese el nombre de usuario:");
+
+        dialog.showAndWait().ifPresent(username -> {
+            TextInputDialog passwordDialog = new TextInputDialog();
+            passwordDialog.setTitle("Eliminar cuenta");
+            passwordDialog.setHeaderText("Eliminar cuenta");
+            passwordDialog.setContentText("Ingrese la contraseña:");
+
+            passwordDialog.showAndWait().ifPresent(password -> eliminarCuenta("alumchat.lol", username, password));
+        });
+    }
+
+    private void agregarContactoUI() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Agregar contacto");
+        dialog.setHeaderText("Agregar contacto");
+        dialog.setContentText("Ingrese el JID del contacto:");
+
+        dialog.showAndWait().ifPresent(contacto -> agregarContacto(contacto + "@alumchat.lol"));
+    }
+
+    public static void registrarCuenta(String domain, String username, String password) {
         try {
             Localpart localpart = Localpart.from(username);
 
+            // Configurar el DNS resolver
             DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
 
             XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
@@ -143,176 +186,148 @@ public class RegisterAccount extends Application {
 
             connection = new XMPPTCPConnection(config);
 
-            connection.connect();
-            logArea.appendText("Conectado al servidor\n");
-
-            AccountManager accountManager = AccountManager.getInstance(connection);
-            accountManager.sensitiveOperationOverInsecureConnection(true);
-
-            if (accountManager.supportsAccountCreation()) {
-                accountManager.createAccount(localpart, password);
-                logArea.appendText("Cuenta registrada exitosamente\n");
-            } else {
-                logArea.appendText("El servidor no soporta la creación de cuentas\n");
-            }
-            connection.disconnect();
-
-        } catch (Exception e) {
-            logArea.appendText("Error al registrar cuenta: " + e.getMessage() + "\n");
-            e.printStackTrace();
-        }
-    }
-
-    private void iniciarSesion() {
-        String username = userField.getText();
-        String password = passField.getText();
-
-        try {
-            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
-
-            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                    .setXmppDomain(domain)
-                    .setHost(domain)
-                    .setPort(5222)
-                    .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
-                    .build();
-
-            connection = new XMPPTCPConnection(config);
-
-            connection.connect();
-            connection.login(username, password);
-            logArea.appendText("Sesión iniciada exitosamente\n");
-
-            ChatManager chatManager = ChatManager.getInstanceFor(connection);
-            chatManager.addIncomingListener((from, message, chat) -> {
-                logArea.appendText("Mensaje recibido de " + from + ": " + message.getBody() + "\n");
-            });
-
-            agregarPresenceListener();
-            agregarSubscribeListener();
-
-        } catch (Exception e) {
-            logArea.appendText("Error al iniciar sesión: " + e.getMessage() + "\n");
-            e.printStackTrace();
-        }
-    }
-
-    private void enviarMensaje() {
-        if (connection != null && connection.isAuthenticated()) {
             try {
-                String destinatario = recipientField.getText();
-                String mensaje = messageField.getText();
-                EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
+                connection.connect();  // Conectar al servidor
+                System.out.println("Conectado al servidor");
+
+                AccountManager accountManager = AccountManager.getInstance(connection);
+                accountManager.sensitiveOperationOverInsecureConnection(true);
+
+                if (accountManager.supportsAccountCreation()) {
+                    accountManager.createAccount(localpart, password);
+                    System.out.println("Cuenta registrada exitosamente");
+                } else {
+                    System.out.println("El servidor no soporta la creación de cuentas");
+                }
+
+            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                connection.disconnect();
+            }
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean iniciarSesion(String domain, String username, String password) {
+        try {
+            // Configurar el DNS resolver
+            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
+
+            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                    .setXmppDomain(domain)
+                    .setHost(domain)
+                    .setPort(5222)
+                    .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                    .build();
+
+            connection = new XMPPTCPConnection(config);
+
+            try {
+                connection.connect();  // Conectar al servidor
+                connection.login(username, password);  // Iniciar sesión
+                System.out.println("Sesión iniciada exitosamente");
+
+                // Añadir el listener para mensajes entrantes
                 ChatManager chatManager = ChatManager.getInstanceFor(connection);
+                chatManager.addIncomingListener((from, message, chat) -> {
+                    System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
+                });
+
+                // Añadir listener para cambios en la presencia
+                Roster roster = Roster.getInstanceFor(connection);
+                roster.addRosterListener(new RosterListener() {
+                    @Override
+                    public void entriesAdded(Collection<Jid> addresses) {}
+
+                    @Override
+                    public void entriesUpdated(Collection<Jid> addresses) {}
+
+                    @Override
+                    public void entriesDeleted(Collection<Jid> addresses) {}
+
+                    @Override
+                    public void presenceChanged(Presence presence) {
+                        String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                        System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+                    }
+                });
+
+                return true;
+
+            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
+                System.out.println("Error al iniciar sesión: " + e.getMessage());
+                e.printStackTrace();
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static void enviarMensaje(String domain, String username, String password, String destinatario, String mensaje) {
+        try {
+            // Configurar el DNS resolver
+            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
+
+            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                    .setXmppDomain(domain)
+                    .setHost(domain)
+                    .setPort(5222)
+                    .setSecurityMode(ConnectionConfiguration.SecurityMode.disabled)
+                    .build();
+
+            connection = new XMPPTCPConnection(config);
+
+            try {
+                connection.connect();  // Conectar al servidor
+                connection.login(username, password);  // Iniciar sesión
+                System.out.println("Sesión iniciada exitosamente");
+
+                ChatManager chatManager = ChatManager.getInstanceFor(connection);
+                EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
                 Chat chat = chatManager.chatWith(jid);
 
                 Message message = new Message(jid, Message.Type.chat);
                 message.setBody(mensaje);
                 chat.send(message);
 
-                logArea.appendText("Mensaje enviado a " + destinatario + "\n");
+                System.out.println("Mensaje enviado a " + destinatario);
 
-            } catch (Exception e) {
-                logArea.appendText("Error al enviar mensaje: " + e.getMessage() + "\n");
+                // Añadir el listener para mensajes entrantes
+                chatManager.addIncomingListener((from, incomingMessage, chat1) -> {
+                    System.out.println("Mensaje recibido de " + from + ": " + incomingMessage.getBody());
+                });
+
+                // Mantener la conexión abierta para recibir mensajes
+                System.out.println("Presione Enter para cerrar la sesión...");
+                new Scanner(System.in).nextLine();
+
+            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
+                System.out.println("Error al enviar mensaje: " + e.getMessage());
                 e.printStackTrace();
+            } finally {
+                connection.disconnect();
             }
-        } else {
-            logArea.appendText("Debe iniciar sesión antes de enviar un mensaje.\n");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    private void agregarContacto() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                String contacto = contactField.getText();
-                EntityBareJid jid = JidCreate.entityBareFrom(contacto);
-                Roster roster = Roster.getInstanceFor(connection);
-                roster.createEntry(jid, contacto, null);
-                logArea.appendText("Contacto agregado exitosamente.\n");
-
-                Presence subscribe = new Presence(Presence.Type.subscribe);
-                subscribe.setTo(jid);
-                connection.sendStanza(subscribe);
-
-            } catch (Exception e) {
-                logArea.appendText("Error al agregar contacto: " + e.getMessage() + "\n");
-                e.printStackTrace();
-            }
+    public static void cerrarSesion() {
+        if (connection != null && connection.isConnected()) {
+            connection.disconnect();
+            System.out.println("Sesión cerrada exitosamente.");
         } else {
-            logArea.appendText("Debe iniciar sesión antes de agregar un contacto.\n");
+            System.out.println("No hay ninguna sesión activa.");
         }
     }
 
-    private void verContactos() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                Roster roster = Roster.getInstanceFor(connection);
-                Collection<RosterEntry> entries = roster.getEntries();
-                logArea.appendText("Contactos:\n");
-                for (RosterEntry entry : entries) {
-                    Presence presence = roster.getPresence(entry.getJid());
-                    String status = presence.isAvailable() ? "Conectado" : "Desconectado";
-                    String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    logArea.appendText(entry.getJid() + " - " + status + " - Mensaje de presencia: " + presenceMessage + "\n");
-                }
-            } catch (Exception e) {
-                logArea.appendText("Error al obtener la lista de contactos: " + e.getMessage() + "\n");
-                e.printStackTrace();
-            }
-        } else {
-            logArea.appendText("Debe iniciar sesión antes de ver los contactos.\n");
-        }
-    }
-
-    private void mostrarUsuariosConectados() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                Roster roster = Roster.getInstanceFor(connection);
-                Collection<RosterEntry> entries = roster.getEntries();
-                logArea.appendText("Usuarios:\n");
-                for (RosterEntry entry : entries) {
-                    Presence presence = roster.getPresence(entry.getJid());
-                    String presenceMessage = presence.isAvailable() ? "Conectado" : "Desconectado";
-                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    logArea.appendText(entry.getJid() + " está " + presenceMessage + " - Mensaje de presencia: " + statusMessage + "\n");
-                }
-
-                Presence ownPresence = roster.getPresence(connection.getUser().asBareJid());
-                String ownPresenceMessage = ownPresence.isAvailable() ? "Conectado" : "Desconectado";
-                String ownStatusMessage = ownPresence.getStatus() != null ? ownPresence.getStatus() : "Sin mensaje de presencia";
-                logArea.appendText(connection.getUser().asBareJid() + " está " + ownPresenceMessage + " - Mensaje de presencia: " + ownStatusMessage + "\n");
-
-            } catch (Exception e) {
-                logArea.appendText("Error al obtener la lista de usuarios conectados: " + e.getMessage() + "\n");
-                e.printStackTrace();
-            }
-        } else {
-            logArea.appendText("Debe iniciar sesión antes de mostrar todos los usuarios conectados y sus mensajes de presencia.\n");
-        }
-    }
-
-    private void definirMensajePresencia() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                String mensaje = statusField.getText();
-                Presence presence = new Presence(Presence.Type.available);
-                presence.setStatus(mensaje);
-                connection.sendStanza(presence);
-                logArea.appendText("Mensaje de presencia actualizado.\n");
-            } catch (Exception e) {
-                logArea.appendText("Error al definir el mensaje de presencia: " + e.getMessage() + "\n");
-                e.printStackTrace();
-            }
-        } else {
-            logArea.appendText("Debe iniciar sesión antes de definir el mensaje de presencia.\n");
-        }
-    }
-
-    private void eliminarCuenta() {
-        String username = userField.getText();
-        String password = passField.getText();
-
+    public static void eliminarCuenta(String domain, String username, String password) {
         try {
+            // Configurar el DNS resolver
             DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
 
             XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
@@ -324,63 +339,115 @@ public class RegisterAccount extends Application {
 
             connection = new XMPPTCPConnection(config);
 
-            connection.connect();
-            connection.login(username, password);
-            logArea.appendText("Sesión iniciada exitosamente\n");
+            try {
+                connection.connect();  // Conectar al servidor
+                connection.login(username, password);  // Iniciar sesión
+                System.out.println("Sesión iniciada exitosamente");
 
-            AccountManager accountManager = AccountManager.getInstance(connection);
-            accountManager.deleteAccount();
-            logArea.appendText("Cuenta eliminada exitosamente.\n");
-            connection.disconnect();
+                AccountManager accountManager = AccountManager.getInstance(connection);
+                accountManager.deleteAccount();
+                System.out.println("Cuenta eliminada exitosamente.");
 
+            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
+                System.out.println("Error al eliminar la cuenta: " + e.getMessage());
+                e.printStackTrace();
+            } finally {
+                connection.disconnect();
+            }
         } catch (Exception e) {
-            logArea.appendText("Error al eliminar la cuenta: " + e.getMessage() + "\n");
             e.printStackTrace();
         }
     }
 
-    private void cerrarSesion() {
-        if (connection != null && connection.isConnected()) {
-            connection.disconnect();
-            logArea.appendText("Sesión cerrada exitosamente.\n");
+    public static void agregarContacto(String jidStr) {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                EntityBareJid jid = JidCreate.entityBareFrom(jidStr);
+                Roster roster = Roster.getInstanceFor(connection);
+                roster.createEntry(jid, jidStr, null);
+                System.out.println("Contacto agregado exitosamente.");
+            } catch (Exception e) {
+                System.out.println("Error al agregar contacto: " + e.getMessage());
+                e.printStackTrace();
+            }
         } else {
-            logArea.appendText("No hay ninguna sesión activa.\n");
+            System.out.println("No has iniciado sesión.");
         }
     }
 
-    private void agregarPresenceListener() {
-        Roster roster = Roster.getInstanceFor(connection);
-        roster.addRosterListener(new RosterListener() {
-            @Override
-            public void entriesAdded(Collection<Jid> addresses) {}
-
-            @Override
-            public void entriesUpdated(Collection<Jid> addresses) {}
-
-            @Override
-            public void entriesDeleted(Collection<Jid> addresses) {}
-
-            @Override
-            public void presenceChanged(Presence presence) {
-                String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                logArea.appendText("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage + "\n");
+    public static void verContactos() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                Roster roster = Roster.getInstanceFor(connection);
+                Collection<RosterEntry> entries = roster.getEntries();
+                System.out.println("Contactos:");
+                for (RosterEntry entry : entries) {
+                    Presence presence = roster.getPresence(entry.getJid());
+                    String status = presence.isAvailable() ? "Conectado" : "Desconectado";
+                    String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                    System.out.println(entry.getJid() + " - " + status + " - Mensaje de presencia: " + presenceMessage);
+                }
+            } catch (Exception e) {
+                System.out.println("Error al obtener la lista de contactos: " + e.getMessage());
+                e.printStackTrace();
             }
-        });
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
     }
 
-    private void agregarSubscribeListener() {
-        Roster roster = Roster.getInstanceFor(connection);
-        roster.addSubscribeListener((from, subscribeRequest) -> {
+    public static void mostrarUsuariosConectados() {
+        if (connection != null && connection.isAuthenticated()) {
             try {
-                roster.createEntry(from.asEntityBareJidIfPossible(), from.asEntityBareJidIfPossible().toString(), null);
-                Presence subscribe = new Presence(Presence.Type.subscribe);
-                subscribe.setTo(from);
-                connection.sendStanza(subscribe);
-                return SubscribeListener.SubscribeAnswer.Approve;
+                Roster roster = Roster.getInstanceFor(connection);
+                Collection<RosterEntry> entries = roster.getEntries();
+                System.out.println("Usuarios:");
+                for (RosterEntry entry : entries) {
+                    Presence presence = roster.getPresence(entry.getJid());
+                    String presenceMessage = presence.isAvailable() ? "Conectado" : "Desconectado";
+                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                    System.out.println(entry.getJid() + " está " + presenceMessage + " - Mensaje de presencia: " + statusMessage);
+                }
+                
+                // Mostrar tu propio estado y mensaje de presencia
+                Presence ownPresence = roster.getPresence(connection.getUser().asBareJid());
+                String ownPresenceMessage = ownPresence.isAvailable() ? "Conectado" : "Desconectado";
+                String ownStatusMessage = ownPresence.getStatus() != null ? ownPresence.getStatus() : "Sin mensaje de presencia";
+                System.out.println(connection.getUser().asBareJid() + " está " + ownPresenceMessage + " - Mensaje de presencia: " + ownStatusMessage);
+
             } catch (Exception e) {
+                System.out.println("Error al obtener la lista de usuarios conectados: " + e.getMessage());
                 e.printStackTrace();
-                return SubscribeListener.SubscribeAnswer.Deny;
             }
-        });
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
+    }
+
+    public static void definirMensajePresencia() {
+        if (connection != null && connection.isAuthenticated()) {
+            try {
+                TextInputDialog dialog = new TextInputDialog();
+                dialog.setTitle("Definir mensaje de presencia");
+                dialog.setHeaderText("Definir mensaje de presencia");
+                dialog.setContentText("Ingrese su mensaje de presencia:");
+
+                dialog.showAndWait().ifPresent(mensaje -> {
+                    Presence presence = new Presence(Presence.Type.available);
+                    presence.setStatus(mensaje);
+                    try {
+                        connection.sendStanza(presence);
+                    } catch (SmackException.NotConnectedException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("Mensaje de presencia actualizado.");
+                });
+            } catch (Exception e) {
+                System.out.println("Error al definir el mensaje de presencia: " + e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
     }
 }
