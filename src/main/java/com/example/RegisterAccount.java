@@ -1,16 +1,18 @@
 package com.example;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
-import org.jivesoftware.smack.AbstractXMPPConnection;
-import org.jivesoftware.smack.SmackException;
-import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.chat2.Chat;
 import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.packet.Message;
@@ -37,6 +39,7 @@ public class RegisterAccount extends Application {
     private static AbstractXMPPConnection connection;
     private static Chat currentChat;
     private static TextArea chatArea;
+    private static ObservableList<String> notifications = FXCollections.observableArrayList();
 
     public static void main(String[] args) {
         launch(args);
@@ -49,8 +52,8 @@ public class RegisterAccount extends Application {
         // Load the background image
         Image backgroundImage = new Image(getClass().getResourceAsStream("/robot.jpg"));
         ImageView backgroundImageView = new ImageView(backgroundImage);
-        backgroundImageView.setFitWidth(200); // Ajusta el ancho de la imagen según sea necesario
-        backgroundImageView.setFitHeight(200); // Ajusta la altura de la imagen según sea necesario
+        backgroundImageView.setFitWidth(400); // Ajusta el ancho de la imagen según sea necesario
+        backgroundImageView.setFitHeight(400); // Ajusta la altura de la imagen según sea necesario
         backgroundImageView.setPreserveRatio(true);
 
         // Create login UI components
@@ -127,8 +130,16 @@ public class RegisterAccount extends Application {
         Button showUsersButton = new Button("Mostrar todos los usuarios conectados y sus mensajes de presencia");
         Button setPresenceButton = new Button("Definir mensaje de presencia");
 
+        // Notification bell
+        Image bellImage = new Image(getClass().getResourceAsStream("/bell.png"));
+        ImageView bellImageView = new ImageView(bellImage);
+        bellImageView.setFitWidth(30); // Adjust as necessary
+        bellImageView.setFitHeight(30); // Adjust as necessary
+        bellImageView.setPreserveRatio(true);
+        bellImageView.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> showNotifications(primaryStage));
+
         vbox.getChildren().addAll(label, registerButton, sendMessageButton, chatButton, logoutButton,
-                deleteAccountButton, exitButton, addContactButton, viewContactsButton, showUsersButton, setPresenceButton);
+                deleteAccountButton, exitButton, addContactButton, viewContactsButton, showUsersButton, setPresenceButton, bellImageView);
 
         // Create HBox to contain VBox and ImageView
         HBox hbox = new HBox(20); // Espacio entre VBox e ImageView
@@ -369,6 +380,7 @@ public class RegisterAccount extends Application {
                     public void presenceChanged(Presence presence) {
                         String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
                         System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+                        addNotification("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
                     }
                 });
 
@@ -539,5 +551,21 @@ public class RegisterAccount extends Application {
         } else {
             System.out.println("No has iniciado sesión.");
         }
+    }
+
+    private static void addNotification(String notification) {
+        notifications.add(notification);
+    }
+
+    private void showNotifications(Stage primaryStage) {
+        ListView<String> notificationListView = new ListView<>(notifications);
+        VBox notificationBox = new VBox(10, new Label("Notificaciones"), notificationListView);
+        notificationBox.setPadding(new Insets(10));
+        notificationBox.setStyle("-fx-background-color: white;");
+
+        Popup popup = new Popup();
+        popup.getContent().add(notificationBox);
+        popup.setAutoHide(true);
+        popup.show(primaryStage);
     }
 }
