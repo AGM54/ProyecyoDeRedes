@@ -7,18 +7,21 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.chat2.Chat;
 import org.jivesoftware.smack.chat2.ChatManager;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
+import org.jivesoftware.smack.roster.RosterListener;
+import org.jivesoftware.smack.roster.SubscribeListener;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.DNSUtil;
 import org.jivesoftware.smack.util.dns.minidns.MiniDnsResolver;
 import org.jivesoftware.smackx.iqregister.AccountManager;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
-import org.jivesoftware.smack.packet.Presence;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -37,7 +40,7 @@ public class RegisterAccount {
             System.out.println("Seleccione una opción:");
             System.out.println("1. Registrar nueva cuenta");
             System.out.println("2. Iniciar sesión con cuenta existente");
-            System.out.println("3. Enviar mensaje a echobot@alumchat.lol");
+            System.out.println("3. Enviar mensaje a un usuario");
             System.out.println("4. Cerrar sesión");
             System.out.println("5. Eliminar cuenta del servidor");
             System.out.println("6. Salir");
@@ -48,7 +51,7 @@ public class RegisterAccount {
             int opcion = scanner.nextInt();
             scanner.nextLine();  // Consume newline
 
-            String username, password, mensaje;
+            String username, password, mensaje, destinatario;
 
             switch (opcion) {
                 case 1:
@@ -63,16 +66,22 @@ public class RegisterAccount {
                     username = scanner.nextLine();
                     System.out.println("Ingrese la contraseña:");
                     password = scanner.nextLine();
-                    iniciarSesion(domain, username, password);
+                    if (iniciarSesion(domain, username, password)) {
+                        // Iniciar el listener de presencia si la sesión se inició exitosamente
+                        agregarPresenceListener();
+                        agregarSubscribeListener();
+                    }
                     break;
                 case 3:
                     System.out.println("Ingrese el nombre de usuario:");
                     username = scanner.nextLine();
                     System.out.println("Ingrese la contraseña:");
                     password = scanner.nextLine();
+                    System.out.println("Ingrese el JID del destinatario:");
+                    destinatario = scanner.nextLine();
                     System.out.println("Ingrese el mensaje:");
                     mensaje = scanner.nextLine();
-                    enviarMensaje(domain, username, password, "echobot@alumchat.lol", mensaje);
+                    enviarMensaje(domain, username, password, destinatario, mensaje);
                     break;
                 case 4:
                     cerrarSesion();
@@ -90,7 +99,9 @@ public class RegisterAccount {
                     break;
                 case 7:
                     if (connection != null && connection.isAuthenticated()) {
-                        agregarContacto("gla21299@alumchat.lol");
+                        System.out.println("Ingrese el nombre de usuario del contacto a agregar:");
+                        String contacto = scanner.nextLine();
+                        agregarContacto(contacto + "@" + domain);
                     } else {
                         System.out.println("Debe iniciar sesión antes de agregar un contacto.");
                         System.out.println("Ingrese el nombre de usuario:");
@@ -98,7 +109,9 @@ public class RegisterAccount {
                         System.out.println("Ingrese la contraseña:");
                         password = scanner.nextLine();
                         if (iniciarSesion(domain, username, password)) {
-                            agregarContacto("gla21299@alumchat.lol");
+                            System.out.println("Ingrese el nombre de usuario del contacto a agregar:");
+                            String contacto = scanner.nextLine();
+                            agregarContacto(contacto + "@" + domain);
                         }
                     }
                     break;
@@ -205,6 +218,12 @@ public class RegisterAccount {
                 chatManager.addIncomingListener((from, message, chat) -> {
                     System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
                 });
+
+                // Añadir listener para cambios en la presencia
+                agregarPresenceListener();
+
+                // Añadir listener para suscripciones
+                agregarSubscribeListener();
 
                 return true;
 
@@ -353,14 +372,20 @@ public class RegisterAccount {
             try {
                 Roster roster = Roster.getInstanceFor(connection);
                 Collection<RosterEntry> entries = roster.getEntries();
-                System.out.println("Usuarios conectados:");
+                System.out.println("Usuarios:");
                 for (RosterEntry entry : entries) {
                     Presence presence = roster.getPresence(entry.getJid());
                     String presenceMessage = presence.isAvailable() ? "Conectado" : "Desconectado";
-                    System.out.println(entry.getJid() + " está " + presenceMessage);
                     String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    System.out.println("Mensaje de presencia: " + statusMessage);
+                    System.out.println(entry.getJid() + " está " + presenceMessage + " - Mensaje de presencia: " + statusMessage);
                 }
+                
+                // Mostrar tu propio estado y mensaje de presencia
+                Presence ownPresence = roster.getPresence(connection.getUser().asBareJid());
+                String ownPresenceMessage = ownPresence.isAvailable() ? "Conectado" : "Desconectado";
+                String ownStatusMessage = ownPresence.getStatus() != null ? ownPresence.getStatus() : "Sin mensaje de presencia";
+                System.out.println(connection.getUser().asBareJid() + " está " + ownPresenceMessage + " - Mensaje de presencia: " + ownStatusMessage);
+
             } catch (Exception e) {
                 System.out.println("Error al obtener la lista de usuarios conectados: " + e.getMessage());
                 e.printStackTrace();
@@ -388,4 +413,41 @@ public class RegisterAccount {
             System.out.println("No has iniciado sesión.");
         }
     }
+
+    private static void agregarPresenceListener() {
+        Roster roster = Roster.getInstanceFor(connection);
+        roster.addRosterListener(new RosterListener() {
+            @Override
+            public void entriesAdded(Collection<Jid> addresses) {}
+
+            @Override
+            public void entriesUpdated(Collection<Jid> addresses) {}
+
+            @Override
+            public void entriesDeleted(Collection<Jid> addresses) {}
+
+            @Override
+            public void presenceChanged(Presence presence) {
+                String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+            }
+        });
+    }
+
+    private static void agregarSubscribeListener() {
+        Roster roster = Roster.getInstanceFor(connection);
+        roster.addSubscribeListener((from, subscribeRequest) -> {
+            try {
+                roster.createEntry(from.asEntityBareJidIfPossible(), from.asEntityBareJidIfPossible().toString(), null);
+                Presence subscribe = new Presence(Presence.Type.subscribe);
+                subscribe.setTo(from);
+                connection.sendStanza(subscribe);
+                return SubscribeListener.SubscribeAnswer.Approve;
+            } catch (Exception e) {
+                e.printStackTrace();
+                return SubscribeListener.SubscribeAnswer.Deny;
+            }
+        });
+    }
 }
+
