@@ -11,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import org.jivesoftware.smack.*;
@@ -25,13 +26,16 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.DNSUtil;
 import org.jivesoftware.smack.util.dns.minidns.MiniDnsResolver;
+import org.jivesoftware.smackx.filetransfer.*;
 import org.jivesoftware.smackx.iqregister.AccountManager;
 import org.jxmpp.jid.EntityBareJid;
+import org.jxmpp.jid.EntityFullJid;
 import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
@@ -43,7 +47,7 @@ public class RegisterAccount extends Application {
     private static VBox chatArea;
 
     private static ObservableList<String> notifications = FXCollections.observableArrayList();
-    private String username; // Añadir esta línea para almacenar el nombre de usuario
+    private String username;
 
     public static void main(String[] args) {
         launch(args);
@@ -56,15 +60,15 @@ public class RegisterAccount extends Application {
         // Load the background image
         Image backgroundImage = new Image(getClass().getResourceAsStream("/inicio.jpg"));
         ImageView backgroundImageView = new ImageView(backgroundImage);
-        backgroundImageView.setFitWidth(400); // Ajusta el ancho de la imagen según sea necesario
-        backgroundImageView.setFitHeight(400); // Ajusta la altura de la imagen según sea necesario
+        backgroundImageView.setFitWidth(400);
+        backgroundImageView.setFitHeight(400);
         backgroundImageView.setPreserveRatio(true);
 
         // Create login UI components
         VBox loginBox = new VBox(10);
         loginBox.setPadding(new Insets(20));
         loginBox.setStyle("-fx-background-color: white;");
-        loginBox.setAlignment(Pos.CENTER); // Centrar el VBox
+        loginBox.setAlignment(Pos.CENTER);
 
         Label loginLabel = new Label("Iniciar sesión o registrar nueva cuenta");
         TextField usernameField = new TextField();
@@ -79,7 +83,7 @@ public class RegisterAccount extends Application {
         VBox loginVBox = new VBox(20);
         loginVBox.setPadding(new Insets(20));
         loginVBox.getChildren().addAll(backgroundImageView, loginBox);
-        loginVBox.setAlignment(Pos.CENTER); // Centrar todo el VBox
+        loginVBox.setAlignment(Pos.CENTER);
 
         StackPane loginRoot = new StackPane();
         loginRoot.getChildren().add(loginVBox);
@@ -93,7 +97,7 @@ public class RegisterAccount extends Application {
 
         // Add login button action
         loginButton.setOnAction(e -> {
-            username = usernameField.getText(); // Guardar el nombre de usuario
+            username = usernameField.getText();
             String password = passwordField.getText();
             if (iniciarSesion("alumchat.lol", username, password)) {
                 showMainMenu(primaryStage);
@@ -115,8 +119,8 @@ public class RegisterAccount extends Application {
         // Load the background image
         Image backgroundImage = new Image(getClass().getResourceAsStream("/inicio.jpg"));
         ImageView backgroundImageView = new ImageView(backgroundImage);
-        backgroundImageView.setFitWidth(400); // Ajusta el ancho de la imagen según sea necesario
-        backgroundImageView.setFitHeight(450); // Ajusta la altura de la imagen según sea necesario
+        backgroundImageView.setFitWidth(400);
+        backgroundImageView.setFitHeight(450);
         backgroundImageView.setPreserveRatio(true);
 
         // Create welcome label
@@ -124,41 +128,49 @@ public class RegisterAccount extends Application {
         welcomeLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #000000;");
         welcomeLabel.setPadding(new Insets(20));
 
+        // Create bell image for notifications
+        Image bellImage = new Image(getClass().getResourceAsStream("/bell.png"));
+        ImageView bellImageView = new ImageView(bellImage);
+        bellImageView.setFitWidth(30);
+        bellImageView.setFitHeight(30);
+        bellImageView.setPreserveRatio(true);
+        bellImageView.setOnMouseClicked(e -> showNotifications(primaryStage));
+
         // Create UI components
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
         vbox.setStyle("-fx-background-color: #67e9ff");
-        vbox.setAlignment(Pos.CENTER); // Centrar el VBox
+        vbox.setAlignment(Pos.CENTER);
 
         HBox buttonBox = new HBox(10);
         buttonBox.setPadding(new Insets(20));
-        buttonBox.setAlignment(Pos.CENTER); // Centrar los botones
+        buttonBox.setAlignment(Pos.CENTER);
 
         // Button for Mensajería
         Button messagingButton = new Button("Mensajería");
-        messagingButton.setPrefSize(350, 150); // Adjust size as needed
+        messagingButton.setPrefSize(350, 150);
         messagingButton.setOnAction(e -> showMessagingOptions(primaryStage));
 
         // Button for Contactos
         Button contactsButton = new Button("Contactos");
-        contactsButton.setPrefSize(200, 50); // Adjust size as needed
+        contactsButton.setPrefSize(200, 50);
         contactsButton.setOnAction(e -> showContactOptions(primaryStage));
 
         // Button for Account Management
         Button accountButton = new Button("Cuenta");
-        accountButton.setPrefSize(200, 50); // Adjust size as needed
+        accountButton.setPrefSize(200, 50);
         accountButton.setOnAction(e -> showAccountOptions(primaryStage));
 
-        VBox rightBox = new VBox(10); // Crear un VBox para los botones de la derecha
+        VBox rightBox = new VBox(10);
         rightBox.getChildren().addAll(contactsButton, accountButton);
-        rightBox.setAlignment(Pos.CENTER); // Centrar los botones en el VBox
+        rightBox.setAlignment(Pos.CENTER);
 
         buttonBox.getChildren().addAll(messagingButton, rightBox);
 
-        HBox mainContent = new HBox(10); // Crear un HBox para el contenido principal
+        HBox mainContent = new HBox(10);
         mainContent.setPadding(new Insets(20));
-        mainContent.getChildren().addAll(backgroundImageView, welcomeLabel); // Añadir la imagen y el mensaje de bienvenida
-        mainContent.setAlignment(Pos.CENTER); // Alinear al centro
+        mainContent.getChildren().addAll(backgroundImageView, welcomeLabel, bellImageView);
+        mainContent.setAlignment(Pos.CENTER);
 
         vbox.getChildren().addAll(mainContent, buttonBox);
 
@@ -177,14 +189,16 @@ public class RegisterAccount extends Application {
 
         VBox optionsBox = new VBox(10);
         optionsBox.setPadding(new Insets(20));
-        optionsBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
+        optionsBox.setAlignment(Pos.CENTER);
 
         Button chatButton = new Button("Chat en tiempo real");
         chatButton.setOnAction(e -> iniciarChatUI(primaryStage));
         Button sendMessageButton = new Button("Enviar mensaje a un usuario");
         sendMessageButton.setOnAction(e -> enviarMensajeUI());
+        Button sendFileButton = new Button("Enviar archivo");
+        sendFileButton.setOnAction(e -> enviarArchivoUI());
 
-        optionsBox.getChildren().addAll(chatButton, sendMessageButton);
+        optionsBox.getChildren().addAll(chatButton, sendMessageButton, sendFileButton);
 
         Scene optionsScene = new Scene(optionsBox, 300, 200);
         optionsStage.setScene(optionsScene);
@@ -197,7 +211,7 @@ public class RegisterAccount extends Application {
 
         VBox optionsBox = new VBox(10);
         optionsBox.setPadding(new Insets(20));
-        optionsBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
+        optionsBox.setAlignment(Pos.CENTER);
 
         Button showUsersButton = new Button("Mostrar todos los usuarios conectados y su mensaje de presencia");
         showUsersButton.setOnAction(e -> mostrarUsuariosConectados());
@@ -219,7 +233,7 @@ public class RegisterAccount extends Application {
 
         VBox optionsBox = new VBox(10);
         optionsBox.setPadding(new Insets(20));
-        optionsBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
+        optionsBox.setAlignment(Pos.CENTER);
 
         Button registerButton = new Button("Registrar nueva cuenta");
         registerButton.setOnAction(e -> registrarCuentaUI());
@@ -234,95 +248,95 @@ public class RegisterAccount extends Application {
         optionsStage.setScene(optionsScene);
         optionsStage.show();
     }
+
     private void agregarMensaje(String mensaje, boolean esEnviado) {
-    Platform.runLater(() -> {
-        Label messageLabel = new Label(mensaje);
-        messageLabel.setWrapText(true);
-        messageLabel.setMaxWidth(300);
+        Platform.runLater(() -> {
+            Label messageLabel = new Label(mensaje);
+            messageLabel.setWrapText(true);
+            messageLabel.setMaxWidth(300);
 
-        // Estilo para los mensajes
-        if (esEnviado) {
-            messageLabel.setStyle("-fx-background-color: #800080; -fx-text-fill: white; -fx-padding: 10px; -fx-background-radius: 10px;");
-        } else {
-            messageLabel.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: black; -fx-padding: 10px; -fx-background-radius: 10px;");
-        }
+            // Estilo para los mensajes
+            if (esEnviado) {
+                messageLabel.setStyle("-fx-background-color: #800080; -fx-text-fill: white; -fx-padding: 10px; -fx-background-radius: 10px;");
+            } else {
+                messageLabel.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: black; -fx-padding: 10px; -fx-background-radius: 10px;");
+            }
 
-        HBox messageBox = new HBox();
-        messageBox.setAlignment(esEnviado ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
-        messageBox.getChildren().add(messageLabel);
-        messageBox.setPadding(new Insets(5));
+            HBox messageBox = new HBox();
+            messageBox.setAlignment(esEnviado ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+            messageBox.getChildren().add(messageLabel);
+            messageBox.setPadding(new Insets(5));
 
-        chatArea.getChildren().add(messageBox);
-    });
-}
+            chatArea.getChildren().add(messageBox);
+        });
+    }
 
-private void iniciarChatUI(Stage primaryStage) {
-    Stage chatStage = new Stage();
-    chatStage.setTitle("Chat en tiempo real");
+    private void iniciarChatUI(Stage primaryStage) {
+        Stage chatStage = new Stage();
+        chatStage.setTitle("Chat en tiempo real");
 
-    VBox chatBox = new VBox(10);
-    chatBox.setPadding(new Insets(20));
-    chatBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
+        VBox chatBox = new VBox(10);
+        chatBox.setPadding(new Insets(20));
+        chatBox.setAlignment(Pos.CENTER);
 
-    chatArea = new VBox();
-    chatArea.setStyle("-fx-background-color: #000000;"); // Fondo negro
-    chatArea.setPrefHeight(400);
+        chatArea = new VBox();
+        chatArea.setStyle("-fx-background-color: #000000;");
+        chatArea.setPrefHeight(400);
 
-    ScrollPane scrollPane = new ScrollPane(chatArea);
-    scrollPane.setFitToWidth(true);
-    scrollPane.setStyle("-fx-background: #000000;");
+        ScrollPane scrollPane = new ScrollPane(chatArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background: #000000;");
 
-    TextField messageField = new TextField();
-    messageField.setPromptText("Escribe tu mensaje...");
+        TextField messageField = new TextField();
+        messageField.setPromptText("Escribe tu mensaje...");
 
-    Button sendButton = new Button("Enviar");
+        Button sendButton = new Button("Enviar");
 
-    HBox messageBox = new HBox(10, messageField, sendButton);
-    messageBox.setAlignment(Pos.CENTER); // Centrar el contenido del HBox
-    chatBox.getChildren().addAll(scrollPane, messageBox);
+        HBox messageBox = new HBox(10, messageField, sendButton);
+        messageBox.setAlignment(Pos.CENTER);
+        chatBox.getChildren().addAll(scrollPane, messageBox);
 
-    Scene chatScene = new Scene(chatBox, 500, 500);
-    chatStage.setScene(chatScene);
-    chatStage.show();
+        Scene chatScene = new Scene(chatBox, 500, 500);
+        chatStage.setScene(chatScene);
+        chatStage.show();
 
-    // Add send button action
-    sendButton.setOnAction(e -> {
-        String message = messageField.getText();
-        if (!message.isEmpty()) {
-            enviarMensaje(currentChat.getXmppAddressOfChatPartner().toString(), message);
-            agregarMensaje("Tú: " + message, true); // Añadir mensaje enviado
-            messageField.clear();
-        }
-    });
+        // Add send button action
+        sendButton.setOnAction(e -> {
+            String message = messageField.getText();
+            if (!message.isEmpty()) {
+                enviarMensaje(currentChat.getXmppAddressOfChatPartner().toString(), message);
+                agregarMensaje("Tú: " + message, true);
+                messageField.clear();
+            }
+        });
 
-    seleccionarUsuarioChat();
-}
+        seleccionarUsuarioChat();
+    }
 
-private void seleccionarUsuarioChat() {
-    TextInputDialog dialog = new TextInputDialog();
-    dialog.setTitle("Seleccionar usuario");
-    dialog.setHeaderText("Seleccionar usuario");
-    dialog.setContentText("Ingrese el JID del usuario con el que desea chatear:");
+    private void seleccionarUsuarioChat() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Seleccionar usuario");
+        dialog.setHeaderText("Seleccionar usuario");
+        dialog.setContentText("Ingrese el JID del usuario con el que desea chatear:");
 
-    dialog.showAndWait().ifPresent(destinatario -> {
-        try {
-            EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
-            currentChat = ChatManager.getInstanceFor(connection).chatWith(jid);
-            agregarMensaje("Chateando con: " + destinatario, false); // Añadir mensaje de inicio de chat
+        dialog.showAndWait().ifPresent(destinatario -> {
+            try {
+                EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
+                currentChat = ChatManager.getInstanceFor(connection).chatWith(jid);
+                agregarMensaje("Chateando con: " + destinatario, false);
 
-            // Escuchar mensajes entrantes
-            ChatManager.getInstanceFor(connection).addIncomingListener((from, message, chat) -> {
-                if (chat.equals(currentChat)) {
-                    agregarMensaje(from.toString() + ": " + message.getBody(), false); // Añadir mensaje recibido
-                }
-            });
+                // Escuchar mensajes entrantes
+                ChatManager.getInstanceFor(connection).addIncomingListener((from, message, chat) -> {
+                    if (chat.equals(currentChat)) {
+                        agregarMensaje(from.toString() + ": " + message.getBody(), false);
+                    }
+                });
 
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
-        }
-    });
-}
-
+            } catch (XmppStringprepException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
     private void enviarMensajeUI() {
         TextInputDialog dialog = new TextInputDialog();
@@ -338,6 +352,52 @@ private void seleccionarUsuarioChat() {
 
             messageDialog.showAndWait().ifPresent(mensaje -> enviarMensaje(destinatario, mensaje));
         });
+    }
+
+    private void enviarArchivoUI() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Seleccionar archivo para enviar");
+        File file = fileChooser.showOpenDialog(null);
+        if (file != null) {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Enviar archivo");
+            dialog.setHeaderText("Enviar archivo");
+            dialog.setContentText("Ingrese el JID del destinatario:");
+
+            dialog.showAndWait().ifPresent(destinatario -> enviarArchivo(destinatario, file));
+        }
+    }
+
+    public static void enviarArchivo(String destinatario, File archivo) {
+        try {
+            if (connection != null && connection.isAuthenticated()) {
+                FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
+                EntityFullJid jid = (EntityFullJid) JidCreate.entityFullFrom(destinatario + "/Smack");
+
+                OutgoingFileTransfer transfer = manager.createOutgoingFileTransfer(jid);
+                transfer.sendFile(archivo, "Aquí tienes el archivo");
+
+                System.out.println("Archivo enviado a " + destinatario);
+            } else {
+                System.out.println("No has iniciado sesión.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error al enviar archivo: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void recibirArchivo(FileTransferRequest request) {
+        try {
+            IncomingFileTransfer transfer = request.accept();
+            File archivo = new File("recibido_" + request.getFileName());
+            transfer.receiveFile(archivo);
+
+            System.out.println("Archivo recibido: " + archivo.getAbsolutePath());
+        } catch (Exception e) {
+            System.out.println("Error al recibir archivo: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void eliminarCuentaUI() {
@@ -371,7 +431,7 @@ private void seleccionarUsuarioChat() {
 
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
-        vbox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
+        vbox.setAlignment(Pos.CENTER);
 
         Label label = new Label("Registrar nueva cuenta");
         TextField usernameField = new TextField();
@@ -411,7 +471,7 @@ private void seleccionarUsuarioChat() {
             connection = new XMPPTCPConnection(config);
 
             try {
-                connection.connect();  // Conectar al servidor
+                connection.connect();
                 System.out.println("Conectado al servidor");
 
                 AccountManager accountManager = AccountManager.getInstance(connection);
@@ -449,8 +509,8 @@ private void seleccionarUsuarioChat() {
             connection = new XMPPTCPConnection(config);
 
             try {
-                connection.connect();  // Conectar al servidor
-                connection.login(username, password);  // Iniciar sesión
+                connection.connect();
+                connection.login(username, password);
                 System.out.println("Sesión iniciada exitosamente");
 
                 // Añadir el listener para mensajes entrantes
@@ -476,6 +536,14 @@ private void seleccionarUsuarioChat() {
                         String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
                         System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
                         addNotification("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+                    }
+                });
+
+                // Añadir listener para solicitudes de transferencia de archivos
+                FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
+                manager.addFileTransferListener(request -> {
+                    if (request.getRequestor().asBareJid().equals(currentChat.getXmppAddressOfChatPartner().asBareJid())) {
+                        Platform.runLater(() -> recibirArchivo(request));
                     }
                 });
 
@@ -537,8 +605,8 @@ private void seleccionarUsuarioChat() {
             connection = new XMPPTCPConnection(config);
 
             try {
-                connection.connect();  // Conectar al servidor
-                connection.login(username, password);  // Iniciar sesión
+                connection.connect();
+                connection.login(username, password);
                 System.out.println("Sesión iniciada exitosamente");
 
                 AccountManager accountManager = AccountManager.getInstance(connection);

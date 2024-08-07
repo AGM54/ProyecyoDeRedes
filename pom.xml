@@ -84,6 +84,12 @@
       <artifactId>javafx-fxml</artifactId>
       <version>${javafx.version}</version>
     </dependency>
+    <!-- Smack file transfer dependency -->
+    <dependency>
+      <groupId>org.igniterealtime.smack</groupId>
+      <artifactId>smack-extensions</artifactId>
+      <version>4.4.4</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -111,4 +117,3 @@
     </pluginManagement>
   </build>
 </project>
-
