@@ -1,6 +1,7 @@
 package com.example;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -38,7 +39,9 @@ public class RegisterAccount extends Application {
 
     private static AbstractXMPPConnection connection;
     private static Chat currentChat;
-    private static TextArea chatArea;
+
+    private static VBox chatArea;
+
     private static ObservableList<String> notifications = FXCollections.observableArrayList();
     private String username; // Añadir esta línea para almacenar el nombre de usuario
 
@@ -231,69 +234,95 @@ public class RegisterAccount extends Application {
         optionsStage.setScene(optionsScene);
         optionsStage.show();
     }
+    private void agregarMensaje(String mensaje, boolean esEnviado) {
+    Platform.runLater(() -> {
+        Label messageLabel = new Label(mensaje);
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(300);
 
-    private void iniciarChatUI(Stage primaryStage) {
-        Stage chatStage = new Stage();
-        chatStage.setTitle("Chat en tiempo real");
+        // Estilo para los mensajes
+        if (esEnviado) {
+            messageLabel.setStyle("-fx-background-color: #800080; -fx-text-fill: white; -fx-padding: 10px; -fx-background-radius: 10px;");
+        } else {
+            messageLabel.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: black; -fx-padding: 10px; -fx-background-radius: 10px;");
+        }
 
-        VBox chatBox = new VBox(10);
-        chatBox.setPadding(new Insets(20));
-        chatBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
+        HBox messageBox = new HBox();
+        messageBox.setAlignment(esEnviado ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+        messageBox.getChildren().add(messageLabel);
+        messageBox.setPadding(new Insets(5));
 
-        chatArea = new TextArea();
-        chatArea.setEditable(false);
-        chatArea.setPrefHeight(400);
+        chatArea.getChildren().add(messageBox);
+    });
+}
 
-        TextField messageField = new TextField();
-        messageField.setPromptText("Escribe tu mensaje...");
+private void iniciarChatUI(Stage primaryStage) {
+    Stage chatStage = new Stage();
+    chatStage.setTitle("Chat en tiempo real");
 
-        Button sendButton = new Button("Enviar");
+    VBox chatBox = new VBox(10);
+    chatBox.setPadding(new Insets(20));
+    chatBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
 
-        HBox messageBox = new HBox(10, messageField, sendButton);
-        messageBox.setAlignment(Pos.CENTER); // Centrar el contenido del HBox
-        chatBox.getChildren().addAll(chatArea, messageBox);
+    chatArea = new VBox();
+    chatArea.setStyle("-fx-background-color: #000000;"); // Fondo negro
+    chatArea.setPrefHeight(400);
 
-        Scene chatScene = new Scene(chatBox, 500, 500);
-        chatStage.setScene(chatScene);
-        chatStage.show();
+    ScrollPane scrollPane = new ScrollPane(chatArea);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setStyle("-fx-background: #000000;");
 
-        // Add send button action
-        sendButton.setOnAction(e -> {
-            String message = messageField.getText();
-            if (!message.isEmpty()) {
-                enviarMensaje(currentChat.getXmppAddressOfChatPartner().toString(), message);
-                chatArea.appendText("Tú: " + message + "\n");
-                messageField.clear();
-            }
-        });
+    TextField messageField = new TextField();
+    messageField.setPromptText("Escribe tu mensaje...");
 
-        seleccionarUsuarioChat();
-    }
+    Button sendButton = new Button("Enviar");
 
-    private void seleccionarUsuarioChat() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Seleccionar usuario");
-        dialog.setHeaderText("Seleccionar usuario");
-        dialog.setContentText("Ingrese el JID del usuario con el que desea chatear:");
+    HBox messageBox = new HBox(10, messageField, sendButton);
+    messageBox.setAlignment(Pos.CENTER); // Centrar el contenido del HBox
+    chatBox.getChildren().addAll(scrollPane, messageBox);
 
-        dialog.showAndWait().ifPresent(destinatario -> {
-            try {
-                EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
-                currentChat = ChatManager.getInstanceFor(connection).chatWith(jid);
-                chatArea.appendText("Chateando con: " + destinatario + "\n");
+    Scene chatScene = new Scene(chatBox, 500, 500);
+    chatStage.setScene(chatScene);
+    chatStage.show();
 
-                // Escuchar mensajes entrantes
-                ChatManager.getInstanceFor(connection).addIncomingListener((from, message, chat) -> {
-                    if (chat.equals(currentChat)) {
-                        chatArea.appendText(from.toString() + ": " + message.getBody() + "\n");
-                    }
-                });
+    // Add send button action
+    sendButton.setOnAction(e -> {
+        String message = messageField.getText();
+        if (!message.isEmpty()) {
+            enviarMensaje(currentChat.getXmppAddressOfChatPartner().toString(), message);
+            agregarMensaje("Tú: " + message, true); // Añadir mensaje enviado
+            messageField.clear();
+        }
+    });
 
-            } catch (XmppStringprepException e) {
-                e.printStackTrace();
-            }
-        });
-    }
+    seleccionarUsuarioChat();
+}
+
+private void seleccionarUsuarioChat() {
+    TextInputDialog dialog = new TextInputDialog();
+    dialog.setTitle("Seleccionar usuario");
+    dialog.setHeaderText("Seleccionar usuario");
+    dialog.setContentText("Ingrese el JID del usuario con el que desea chatear:");
+
+    dialog.showAndWait().ifPresent(destinatario -> {
+        try {
+            EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
+            currentChat = ChatManager.getInstanceFor(connection).chatWith(jid);
+            agregarMensaje("Chateando con: " + destinatario, false); // Añadir mensaje de inicio de chat
+
+            // Escuchar mensajes entrantes
+            ChatManager.getInstanceFor(connection).addIncomingListener((from, message, chat) -> {
+                if (chat.equals(currentChat)) {
+                    agregarMensaje(from.toString() + ": " + message.getBody(), false); // Añadir mensaje recibido
+                }
+            });
+
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
+        }
+    });
+}
+
 
     private void enviarMensajeUI() {
         TextInputDialog dialog = new TextInputDialog();
