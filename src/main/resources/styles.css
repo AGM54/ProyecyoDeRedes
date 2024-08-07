@@ -1,5 +1,6 @@
 .root {
     -fx-background-size: cover;
+    -fx-background-color:#000000;
 }
 
 .button {
@@ -35,4 +36,22 @@
 .dialog-pane .button {
     -fx-background-color: #0073e6;
     -fx-text-fill: white;
+}
+
+.button {
+    -fx-background-color: linear-gradient(#c637d0, #a350e2);
+    -fx-background-radius: 30;
+    -fx-background-insets: 0;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-padding: 10 20 10 20;
+}
+
+.button:hover {
+    -fx-background-color: linear-gradient(#b260f9, #a350e2);
+}
+
+.button:pressed {
+    -fx-background-color: linear-gradient(#2a9fe8, #a350e2);
+    -fx-effect: innershadow( three-pass-box , rgba(0,0,0,0.6) , 10, 0.0 , 0 , 1 );
 }

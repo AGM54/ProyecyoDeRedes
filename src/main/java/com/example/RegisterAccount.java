@@ -4,11 +4,11 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
@@ -40,6 +40,7 @@ public class RegisterAccount extends Application {
     private static Chat currentChat;
     private static TextArea chatArea;
     private static ObservableList<String> notifications = FXCollections.observableArrayList();
+    private String username; // Añadir esta línea para almacenar el nombre de usuario
 
     public static void main(String[] args) {
         launch(args);
@@ -60,6 +61,7 @@ public class RegisterAccount extends Application {
         VBox loginBox = new VBox(10);
         loginBox.setPadding(new Insets(20));
         loginBox.setStyle("-fx-background-color: white;");
+        loginBox.setAlignment(Pos.CENTER); // Centrar el VBox
 
         Label loginLabel = new Label("Iniciar sesión o registrar nueva cuenta");
         TextField usernameField = new TextField();
@@ -71,13 +73,13 @@ public class RegisterAccount extends Application {
 
         loginBox.getChildren().addAll(loginLabel, usernameField, passwordField, loginButton, registerButton);
 
-        HBox loginHBox = new HBox(20);
-        loginHBox.setPadding(new Insets(20));
-        loginHBox.getChildren().addAll(loginBox, backgroundImageView);
+        VBox loginVBox = new VBox(20);
+        loginVBox.setPadding(new Insets(20));
+        loginVBox.getChildren().addAll(backgroundImageView, loginBox);
+        loginVBox.setAlignment(Pos.CENTER); // Centrar todo el VBox
 
         StackPane loginRoot = new StackPane();
-        loginRoot.getChildren().add(loginHBox);
-        
+        loginRoot.getChildren().add(loginVBox);
 
         Scene loginScene = new Scene(loginRoot, 800, 600);
         loginScene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
@@ -88,7 +90,7 @@ public class RegisterAccount extends Application {
 
         // Add login button action
         loginButton.setOnAction(e -> {
-            String username = usernameField.getText();
+            username = usernameField.getText(); // Guardar el nombre de usuario
             String password = passwordField.getText();
             if (iniciarSesion("alumchat.lol", username, password)) {
                 showMainMenu(primaryStage);
@@ -111,35 +113,51 @@ public class RegisterAccount extends Application {
         Image backgroundImage = new Image(getClass().getResourceAsStream("/inicio.jpg"));
         ImageView backgroundImageView = new ImageView(backgroundImage);
         backgroundImageView.setFitWidth(400); // Ajusta el ancho de la imagen según sea necesario
-        backgroundImageView.setFitHeight(400); // Ajusta la altura de la imagen según sea necesario
+        backgroundImageView.setFitHeight(450); // Ajusta la altura de la imagen según sea necesario
         backgroundImageView.setPreserveRatio(true);
+
+        // Create welcome label
+        Label welcomeLabel = new Label("Bienvenido, " + username);
+        welcomeLabel.setStyle("-fx-font-size: 20px; -fx-text-fill: #000000;");
+        welcomeLabel.setPadding(new Insets(20));
 
         // Create UI components
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
-        vbox.setStyle("-fx-background-color: white;");
+        vbox.setStyle("-fx-background-color: #67e9ff");
+        vbox.setAlignment(Pos.CENTER); // Centrar el VBox
 
         HBox buttonBox = new HBox(10);
         buttonBox.setPadding(new Insets(20));
+        buttonBox.setAlignment(Pos.CENTER); // Centrar los botones
 
         // Button for Mensajería
         Button messagingButton = new Button("Mensajería");
-        messagingButton.setPrefSize(400, 100); // Adjust size as needed
+        messagingButton.setPrefSize(350, 150); // Adjust size as needed
         messagingButton.setOnAction(e -> showMessagingOptions(primaryStage));
 
         // Button for Contactos
         Button contactsButton = new Button("Contactos");
-        contactsButton.setPrefSize(200, 100); // Adjust size as needed
+        contactsButton.setPrefSize(200, 50); // Adjust size as needed
         contactsButton.setOnAction(e -> showContactOptions(primaryStage));
 
         // Button for Account Management
         Button accountButton = new Button("Cuenta");
-        accountButton.setPrefSize(200, 100); // Adjust size as needed
+        accountButton.setPrefSize(200, 50); // Adjust size as needed
         accountButton.setOnAction(e -> showAccountOptions(primaryStage));
 
-        buttonBox.getChildren().addAll(messagingButton, contactsButton, accountButton);
+        VBox rightBox = new VBox(10); // Crear un VBox para los botones de la derecha
+        rightBox.getChildren().addAll(contactsButton, accountButton);
+        rightBox.setAlignment(Pos.CENTER); // Centrar los botones en el VBox
 
-        vbox.getChildren().addAll(backgroundImageView, buttonBox);
+        buttonBox.getChildren().addAll(messagingButton, rightBox);
+
+        HBox mainContent = new HBox(10); // Crear un HBox para el contenido principal
+        mainContent.setPadding(new Insets(20));
+        mainContent.getChildren().addAll(backgroundImageView, welcomeLabel); // Añadir la imagen y el mensaje de bienvenida
+        mainContent.setAlignment(Pos.CENTER); // Alinear al centro
+
+        vbox.getChildren().addAll(mainContent, buttonBox);
 
         StackPane root = new StackPane();
         root.getChildren().add(vbox);
@@ -156,6 +174,7 @@ public class RegisterAccount extends Application {
 
         VBox optionsBox = new VBox(10);
         optionsBox.setPadding(new Insets(20));
+        optionsBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
 
         Button chatButton = new Button("Chat en tiempo real");
         chatButton.setOnAction(e -> iniciarChatUI(primaryStage));
@@ -175,6 +194,7 @@ public class RegisterAccount extends Application {
 
         VBox optionsBox = new VBox(10);
         optionsBox.setPadding(new Insets(20));
+        optionsBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
 
         Button showUsersButton = new Button("Mostrar todos los usuarios conectados y su mensaje de presencia");
         showUsersButton.setOnAction(e -> mostrarUsuariosConectados());
@@ -196,6 +216,7 @@ public class RegisterAccount extends Application {
 
         VBox optionsBox = new VBox(10);
         optionsBox.setPadding(new Insets(20));
+        optionsBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
 
         Button registerButton = new Button("Registrar nueva cuenta");
         registerButton.setOnAction(e -> registrarCuentaUI());
@@ -217,6 +238,7 @@ public class RegisterAccount extends Application {
 
         VBox chatBox = new VBox(10);
         chatBox.setPadding(new Insets(20));
+        chatBox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
 
         chatArea = new TextArea();
         chatArea.setEditable(false);
@@ -228,6 +250,7 @@ public class RegisterAccount extends Application {
         Button sendButton = new Button("Enviar");
 
         HBox messageBox = new HBox(10, messageField, sendButton);
+        messageBox.setAlignment(Pos.CENTER); // Centrar el contenido del HBox
         chatBox.getChildren().addAll(chatArea, messageBox);
 
         Scene chatScene = new Scene(chatBox, 500, 500);
@@ -319,6 +342,7 @@ public class RegisterAccount extends Application {
 
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(20));
+        vbox.setAlignment(Pos.CENTER); // Centrar el contenido del VBox
 
         Label label = new Label("Registrar nueva cuenta");
         TextField usernameField = new TextField();
@@ -552,7 +576,7 @@ public class RegisterAccount extends Application {
                     String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
                     System.out.println(entry.getJid() + " está " + presenceMessage + " - Mensaje de presencia: " + statusMessage);
                 }
-                
+
                 // Mostrar tu propio estado y mensaje de presencia
                 Presence ownPresence = roster.getPresence(connection.getUser().asBareJid());
                 String ownPresenceMessage = ownPresence.isAvailable() ? "Conectado" : "Desconectado";
