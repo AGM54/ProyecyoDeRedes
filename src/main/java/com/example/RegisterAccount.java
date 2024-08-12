@@ -34,10 +34,14 @@ import org.jxmpp.jid.Jid;
 import org.jxmpp.jid.impl.JidCreate;
 import org.jxmpp.jid.parts.Localpart;
 import org.jxmpp.stringprep.XmppStringprepException;
-
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import javafx.scene.layout.StackPane;
+
+import org.jivesoftware.smack.debugger.ConsoleDebugger;
 
 public class RegisterAccount extends Application {
 
@@ -186,68 +190,88 @@ public class RegisterAccount extends Application {
     private void showMessagingOptions(Stage primaryStage) {
         Stage optionsStage = new Stage();
         optionsStage.setTitle("Opciones de Mensajería");
-
-        VBox optionsBox = new VBox(10);
+    
+        VBox optionsBox = new VBox(15);
         optionsBox.setPadding(new Insets(20));
         optionsBox.setAlignment(Pos.CENTER);
-
-        Button chatButton = new Button("Chat en tiempo real");
+        optionsBox.setStyle("-fx-background-color: #000000; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+        // Crear botones con estilos personalizados
+        Button chatButton = createStyledButton("Chat en tiempo real", "#4CAF50", "white", "#388E3C");
+        Button sendMessageButton = createStyledButton("Enviar mensaje a un usuario", "#FF9800", "white", "#F57C00");
+        Button sendFileButton = createStyledButton("Enviar archivo", "#2196F3", "white", "#1976D2");
+    
+        // Asignar acciones a los botones
         chatButton.setOnAction(e -> iniciarChatUI(primaryStage));
-        Button sendMessageButton = new Button("Enviar mensaje a un usuario");
         sendMessageButton.setOnAction(e -> enviarMensajeUI());
-        Button sendFileButton = new Button("Enviar archivo");
         sendFileButton.setOnAction(e -> enviarArchivoUI());
-
+    
+        // Añadir los botones al VBox
         optionsBox.getChildren().addAll(chatButton, sendMessageButton, sendFileButton);
-
-        Scene optionsScene = new Scene(optionsBox, 300, 200);
+    
+        Scene optionsScene = new Scene(optionsBox, 400, 250);
         optionsStage.setScene(optionsScene);
         optionsStage.show();
     }
+    
 
     private void showContactOptions(Stage primaryStage) {
         Stage optionsStage = new Stage();
         optionsStage.setTitle("Opciones de Contactos");
-
-        VBox optionsBox = new VBox(10);
+    
+        VBox optionsBox = new VBox(15);
         optionsBox.setPadding(new Insets(20));
         optionsBox.setAlignment(Pos.CENTER);
-
-        Button showUsersButton = new Button("Mostrar todos los usuarios conectados y su mensaje de presencia");
+        optionsBox.setStyle("-fx-background-color: #000000; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+        // Crear botones con estilos personalizados
+        Button showUsersButton = createStyledButton("Mostrar todos los usuarios conectados", "#4CAF50", "white", "#388E3C");
+        Button viewContactsButton = createStyledButton("Ver contactos", "#2196F3", "white", "#1976D2");
+        Button addContactButton = createStyledButton("Agregar un contacto", "#FF9800", "white", "#F57C00");
+    
+        // Asignar acciones a los botones
         showUsersButton.setOnAction(e -> mostrarUsuariosConectados());
-        Button viewContactsButton = new Button("Ver contactos");
         viewContactsButton.setOnAction(e -> verContactos());
-        Button addContactButton = new Button("Agregar un contacto");
         addContactButton.setOnAction(e -> agregarContactoUI());
-
+    
+        // Añadir los botones al VBox
         optionsBox.getChildren().addAll(showUsersButton, viewContactsButton, addContactButton);
-
-        Scene optionsScene = new Scene(optionsBox, 400, 200);
+    
+        Scene optionsScene = new Scene(optionsBox, 400, 250);
         optionsStage.setScene(optionsScene);
         optionsStage.show();
     }
+    
 
     private void showAccountOptions(Stage primaryStage) {
         Stage optionsStage = new Stage();
         optionsStage.setTitle("Opciones de Cuenta");
-
-        VBox optionsBox = new VBox(10);
+    
+        VBox optionsBox = new VBox(15);
         optionsBox.setPadding(new Insets(20));
         optionsBox.setAlignment(Pos.CENTER);
-
-        Button registerButton = new Button("Registrar nueva cuenta");
+        optionsBox.setStyle("-fx-background-color: #f9f9f9; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+        // Crear botones con estilos personalizados
+        Button registerButton = createStyledButton("Registrar nueva cuenta", "#4CAF50", "white", "#388E3C");
+        Button deleteAccountButton = createStyledButton("Eliminar cuenta del servidor", "#F44336", "white", "#D32F2F");
+        Button logoutButton = createStyledButton("Cerrar sesión", "#FF9800", "white", "#F57C00");
+        Button setPresenceMessageButton = createStyledButton("Definir mensaje de presencia", "#2196F3", "white", "#1976D2");
+    
+        // Asignar acciones a los botones
         registerButton.setOnAction(e -> registrarCuentaUI());
-        Button deleteAccountButton = new Button("Eliminar cuenta del servidor");
         deleteAccountButton.setOnAction(e -> eliminarCuentaUI());
-        Button logoutButton = new Button("Cerrar sesión");
         logoutButton.setOnAction(e -> cerrarSesion());
-
-        optionsBox.getChildren().addAll(registerButton, deleteAccountButton, logoutButton);
-
-        Scene optionsScene = new Scene(optionsBox, 300, 200);
+        setPresenceMessageButton.setOnAction(e -> definirMensajePresencia());
+    
+        // Añadir los botones al VBox
+        optionsBox.getChildren().addAll(registerButton, deleteAccountButton, logoutButton, setPresenceMessageButton);
+    
+        Scene optionsScene = new Scene(optionsBox, 300, 250);
         optionsStage.setScene(optionsScene);
         optionsStage.show();
     }
+    
 
     private void agregarMensaje(String mensaje, boolean esEnviado) {
         Platform.runLater(() -> {
@@ -367,38 +391,86 @@ public class RegisterAccount extends Application {
             dialog.showAndWait().ifPresent(destinatario -> enviarArchivo(destinatario, file));
         }
     }
-
     public static void enviarArchivo(String destinatario, File archivo) {
-        try {
-            if (connection != null && connection.isAuthenticated()) {
-                FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
-                EntityFullJid jid = (EntityFullJid) JidCreate.entityFullFrom(destinatario + "/Smack");
+    try {
+        if (connection != null && connection.isAuthenticated()) {
+            System.out.println("Conexión autenticada.");
+            System.out.println("Archivo existe: " + archivo.getAbsolutePath());
 
-                OutgoingFileTransfer transfer = manager.createOutgoingFileTransfer(jid);
-                transfer.sendFile(archivo, "Aquí tienes el archivo");
+            // Verificar la presencia del destinatario con reintentos
+            Roster roster = Roster.getInstanceFor(connection);
+            EntityBareJid bareJid = JidCreate.entityBareFrom(destinatario);
+            boolean isAvailable = false;
 
+            for (int i = 0; i < 5; i++) { // Intentar 5 veces
+                Presence presence = roster.getPresence(bareJid);
+                System.out.println("Presencia del destinatario: " + presence.isAvailable());
+                if (presence.isAvailable()) {
+                    isAvailable = true;
+                    break;
+                }
+                Thread.sleep(2000); // Esperar 2 segundos antes de intentar de nuevo
+            }
+
+            if (!isAvailable) {
+                System.out.println("El destinatario no está disponible para recibir archivos.");
+                return;
+            }
+
+            EntityFullJid fullJid = JidCreate.entityFullFrom(destinatario + "/Smack");
+            System.out.println("JID del destinatario creado: " + fullJid.toString());
+
+            FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
+            OutgoingFileTransfer transfer = manager.createOutgoingFileTransfer(fullJid);
+
+            System.out.println("Iniciando la transferencia del archivo: " + archivo.getAbsolutePath());
+            transfer.sendFile(archivo, "Aquí tienes el archivo");
+
+            // Verificar el estado de la transferencia
+            while (!transfer.isDone()) {
+                System.out.println("Estado de la transferencia: " + transfer.getStatus());
+                if (transfer.getStatus().equals(FileTransfer.Status.in_progress)) {
+                    System.out.println("Transferencia en progreso...");
+                } else if (transfer.getStatus().equals(FileTransfer.Status.error)) {
+                    System.out.println("Error durante la transferencia: " + transfer.getError() + " - " + transfer.getException());
+                    break; // Salir del bucle si hay un error
+                }
+                Thread.sleep(1000); // Esperar 1 segundo antes de verificar el estado nuevamente
+            }
+
+            if (transfer.getStatus().equals(FileTransfer.Status.complete)) {
                 System.out.println("Archivo enviado a " + destinatario);
             } else {
-                System.out.println("No has iniciado sesión.");
+                System.out.println("Error al enviar archivo: " + transfer.getStatus() + " - " + transfer.getError() + " - " + transfer.getException());
             }
-        } catch (Exception e) {
-            System.out.println("Error al enviar archivo: " + e.getMessage());
-            e.printStackTrace();
+        } else {
+            System.out.println("No has iniciado sesión.");
         }
+    } catch (Exception e) {
+        System.out.println("Error al enviar archivo: " + e.getMessage());
+        e.printStackTrace();
     }
+}
 
-    public static void recibirArchivo(FileTransferRequest request) {
+
+  public static void recibirArchivo(FileTransferRequest request) {
         try {
+            System.out.println("Aceptando la solicitud de archivo de " + request.getRequestor());
             IncomingFileTransfer transfer = request.accept();
             File archivo = new File("recibido_" + request.getFileName());
+            System.out.println("Recibiendo archivo: " + archivo.getAbsolutePath());
             transfer.receiveFile(archivo);
-
             System.out.println("Archivo recibido: " + archivo.getAbsolutePath());
+    
+            // Añadir notificación
+            addNotification("Archivo recibido de " + request.getRequestor() + ": " + archivo.getName());
         } catch (Exception e) {
             System.out.println("Error al recibir archivo: " + e.getMessage());
             e.printStackTrace();
         }
     }
+    
+
 
     private void eliminarCuentaUI() {
         TextInputDialog dialog = new TextInputDialog();
@@ -493,72 +565,110 @@ public class RegisterAccount extends Application {
             e.printStackTrace();
         }
     }
+public static boolean iniciarSesion(String domain, String username, String password) {
+    try {
+        // Configurar el DNS resolver
+        DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
+        System.out.println("DNS resolver configurado.");
 
-    public static boolean iniciarSesion(String domain, String username, String password) {
+        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                .setXmppDomain(domain)
+                .setHost(domain)
+                .setPort(5222)
+                .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
+                .setDebuggerFactory(ConsoleDebugger::new)  // Habilitar depuración en consola
+                .build();
+        System.out.println("Configuración de la conexión establecida.");
+
+        connection = new XMPPTCPConnection(config);
+
         try {
-            // Configurar el DNS resolver
-            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
+            connection.connect();
+            System.out.println("Conexión al servidor establecida.");
 
-            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                    .setXmppDomain(domain)
-                    .setHost(domain)
-                    .setPort(5222)
-                    .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
-                    .build();
+            connection.login(username, password);
+            System.out.println("Sesión iniciada exitosamente con el usuario: " + username);
 
-            connection = new XMPPTCPConnection(config);
-
-            try {
-                connection.connect();
-                connection.login(username, password);
-                System.out.println("Sesión iniciada exitosamente");
-
-                // Añadir el listener para mensajes entrantes
-                ChatManager chatManager = ChatManager.getInstanceFor(connection);
-                chatManager.addIncomingListener((from, message, chat) -> {
-                    System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
-                });
-
-                // Añadir listener para cambios en la presencia
-                Roster roster = Roster.getInstanceFor(connection);
-                roster.addRosterListener(new RosterListener() {
-                    @Override
-                    public void entriesAdded(Collection<Jid> addresses) {}
-
-                    @Override
-                    public void entriesUpdated(Collection<Jid> addresses) {}
-
-                    @Override
-                    public void entriesDeleted(Collection<Jid> addresses) {}
-
-                    @Override
-                    public void presenceChanged(Presence presence) {
-                        String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                        System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
-                        addNotification("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
-                    }
-                });
-
-                // Añadir listener para solicitudes de transferencia de archivos
-                FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
-                manager.addFileTransferListener(request -> {
-                    if (request.getRequestor().asBareJid().equals(currentChat.getXmppAddressOfChatPartner().asBareJid())) {
-                        Platform.runLater(() -> recibirArchivo(request));
-                    }
-                });
-
-                return true;
-
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                System.out.println("Error al iniciar sesión: " + e.getMessage());
-                e.printStackTrace();
-                return false;
+            // Mostrar las características del servidor
+            ServiceDiscoveryManager discoManager = ServiceDiscoveryManager.getInstanceFor(connection);
+            Jid serverJid = JidCreate.from(domain);
+            DiscoverInfo info = discoManager.discoverInfo(serverJid);
+            System.out.println("Características del servidor:");
+            for (DiscoverInfo.Feature feature : info.getFeatures()) {
+                System.out.println(" - " + feature.getVar());
             }
-        } catch (Exception e) {
+
+            // Añadir el listener para mensajes entrantes
+            ChatManager chatManager = ChatManager.getInstanceFor(connection);
+            chatManager.addIncomingListener((from, message, chat) -> {
+                System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
+            });
+            System.out.println("Listener de mensajes entrantes añadido.");
+
+            // Añadir listener para cambios en la presencia
+            Roster roster = Roster.getInstanceFor(connection);
+            roster.addRosterListener(new RosterListener() {
+                @Override
+                public void entriesAdded(Collection<Jid> addresses) {}
+
+                @Override
+                public void entriesUpdated(Collection<Jid> addresses) {}
+
+                @Override
+                public void entriesDeleted(Collection<Jid> addresses) {}
+
+                @Override
+                public void presenceChanged(Presence presence) {
+                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+                    System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+                    addNotification("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+                }
+            });
+            System.out.println("Listener de presencia añadido.");
+
+            // Añadir listener para solicitudes de transferencia de archivos
+            FileTransferManager manager = FileTransferManager.getInstanceFor(connection);
+            manager.addFileTransferListener(request -> {
+                System.out.println("Solicitud de transferencia de archivo recibida de " + request.getRequestor());
+                Platform.runLater(() -> recibirArchivo(request));
+            });
+            System.out.println("Listener de transferencia de archivos añadido.");
+
+            // Establecer presencia
+            Presence presence = new Presence(Presence.Type.available);
+            connection.sendStanza(presence);
+            System.out.println("Presencia establecida como disponible.");
+
+            // Enviar un mensaje simple para verificar la conexión
+            String destinatario = "gla21299@alumchat.lol";
+            enviarMensaje(destinatario, "Mensaje de prueba para verificar conexión");
+            System.out.println("Mensaje de prueba enviado a " + destinatario);
+
+            // Intentar enviar un archivo
+            File archivo = new File("C:\\Users\\marce\\Downloads\\icono.png");
+            if (archivo.exists()) {
+                System.out.println("El archivo existe: " + archivo.getAbsolutePath());
+                enviarArchivo(destinatario, archivo);
+            } else {
+                System.out.println("El archivo no existe: " + archivo.getAbsolutePath());
+            }
+
+            return true;
+
+        } catch (SmackException | IOException | XMPPException | InterruptedException e) {
+            System.out.println("Error al iniciar sesión: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
+    } catch (Exception e) {
+        System.out.println("Error general: " + e.getMessage());
+        e.printStackTrace();
+        return false;
     }
+}
+
+
+    
 
     public static void enviarMensaje(String destinatario, String mensaje) {
         try {
@@ -645,13 +755,49 @@ public class RegisterAccount extends Application {
             try {
                 Roster roster = Roster.getInstanceFor(connection);
                 Collection<RosterEntry> entries = roster.getEntries();
-                System.out.println("Contactos:");
+    
+                // Crear un nuevo Stage para mostrar los contactos
+                Stage contactosStage = new Stage();
+                contactosStage.setTitle("Lista de Contactos");
+    
+                VBox contactsBox = new VBox(10);
+                contactsBox.setPadding(new Insets(20));
+                contactsBox.setAlignment(Pos.CENTER);
+                contactsBox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+                // Añadir los contactos al VBox
                 for (RosterEntry entry : entries) {
                     Presence presence = roster.getPresence(entry.getJid());
                     String status = presence.isAvailable() ? "Conectado" : "Desconectado";
                     String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    System.out.println(entry.getJid() + " - " + status + " - Mensaje de presencia: " + presenceMessage);
+    
+                    HBox contactItem = new HBox(10);
+                    contactItem.setPadding(new Insets(10));
+                    contactItem.setAlignment(Pos.CENTER_LEFT);
+                    contactItem.setStyle("-fx-background-color: #34495e; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+    
+                    Label contactLabel = new Label(entry.getJid().toString());
+                    contactLabel.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-font-weight: bold;");
+    
+                    Label statusLabel = new Label(status);
+                    statusLabel.setStyle(status.equals("Conectado") ? "-fx-text-fill: #2ecc71; -fx-font-size: 14px;" : "-fx-text-fill: #e74c3c; -fx-font-size: 14px;");
+    
+                    Label messageLabel = new Label(presenceMessage);
+                    messageLabel.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 12px;");
+    
+                    contactItem.getChildren().addAll(contactLabel, statusLabel, messageLabel);
+                    contactsBox.getChildren().add(contactItem);
                 }
+    
+                // Crear un ScrollPane para el VBox en caso de que haya muchos contactos
+                ScrollPane scrollPane = new ScrollPane(contactsBox);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setStyle("-fx-background-color: #2c3e50;");
+    
+                Scene scene = new Scene(scrollPane, 400, 300);
+                contactosStage.setScene(scene);
+                contactosStage.show();
+    
             } catch (Exception e) {
                 System.out.println("Error al obtener la lista de contactos: " + e.getMessage());
                 e.printStackTrace();
@@ -660,6 +806,8 @@ public class RegisterAccount extends Application {
             System.out.println("No has iniciado sesión.");
         }
     }
+    
+    
 
     public static void mostrarUsuariosConectados() {
         if (connection != null && connection.isAuthenticated()) {
@@ -719,6 +867,23 @@ public class RegisterAccount extends Application {
     private static void addNotification(String notification) {
         notifications.add(notification);
     }
+    private Button createStyledButton(String text, String backgroundColor, String textColor, String borderColor) {
+    Button button = new Button(text);
+    button.setStyle(
+        "-fx-background-color: " + backgroundColor + "; " +
+        "-fx-text-fill: " + textColor + "; " +
+        "-fx-border-color: " + borderColor + "; " +
+        "-fx-border-width: 2px; " +
+        "-fx-font-size: 14px; " +
+        "-fx-padding: 10px 20px; " +
+        "-fx-background-radius: 5px; " +
+        "-fx-border-radius: 5px;"
+    );
+    button.setPrefWidth(200);
+    button.setAlignment(Pos.CENTER_LEFT);
+    return button;
+}
+
 
     private void showNotifications(Stage primaryStage) {
         ListView<String> notificationListView = new ListView<>(notifications);
