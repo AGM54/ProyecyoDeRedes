@@ -39,7 +39,7 @@ import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import javafx.scene.layout.StackPane;
+
 
 import org.jivesoftware.smack.debugger.ConsoleDebugger;
 
@@ -493,31 +493,66 @@ public class RegisterAccount extends Application {
         dialog.setTitle("Agregar contacto");
         dialog.setHeaderText("Agregar contacto");
         dialog.setContentText("Ingrese el JID del contacto:");
-
+    
+        // Cargar la imagen personalizada
+        ImageView customIcon = new ImageView(new Image(getClass().getResourceAsStream("/icono.png")));
+        customIcon.setFitWidth(30);
+        customIcon.setFitHeight(30);
+    
+        // Reemplazar el icono por defecto
+        dialog.setGraphic(customIcon);
+    
+        // Estilo del diálogo
+        dialog.getDialogPane().setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+        // Estilo del header
+        dialog.getDialogPane().lookup(".header-panel").setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1;");
+    
+        // Estilo del contenido
+        dialog.getDialogPane().lookup(".content").setStyle("-fx-text-fill: #ecf0f1;");
+    
+        // Estilo del campo de texto
+        dialog.getEditor().setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #7f8c8d;");
+    
+        // Estilo de los botones
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        Button cancelButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL);
+        okButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white;");
+        cancelButton.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white;");
+    
         dialog.showAndWait().ifPresent(contacto -> agregarContacto(contacto + "@alumchat.lol"));
     }
+    
+    
 
     private void registrarCuentaUI() {
         Stage stage = new Stage();
         stage.setTitle("Registrar nueva cuenta");
-
-        VBox vbox = new VBox(10);
+    
+        VBox vbox = new VBox(15);
         vbox.setPadding(new Insets(20));
         vbox.setAlignment(Pos.CENTER);
-
+        vbox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
         Label label = new Label("Registrar nueva cuenta");
+        label.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 16px; -fx-font-weight: bold;");
+        
         TextField usernameField = new TextField();
         usernameField.setPromptText("Usuario");
+        usernameField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Contraseña");
-        Button registerButton = new Button("Registrar");
-
+        passwordField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        
+        Button registerButton = createStyledButton("Registrar", "#4CAF50", "white", "#388E3C");
+        
         vbox.getChildren().addAll(label, usernameField, passwordField, registerButton);
-
-        Scene scene = new Scene(vbox, 300, 200);
+    
+        Scene scene = new Scene(vbox, 300, 250);
         stage.setScene(scene);
         stage.show();
-
+    
         registerButton.setOnAction(e -> {
             String username = usernameField.getText();
             String password = passwordField.getText();
@@ -525,7 +560,7 @@ public class RegisterAccount extends Application {
             stage.close();
         });
     }
-
+    
     public static void registrarCuenta(String domain, String username, String password) {
         try {
             Localpart localpart = Localpart.from(username);
@@ -808,26 +843,54 @@ public static boolean iniciarSesion(String domain, String username, String passw
     }
     
     
-
     public static void mostrarUsuariosConectados() {
         if (connection != null && connection.isAuthenticated()) {
             try {
                 Roster roster = Roster.getInstanceFor(connection);
                 Collection<RosterEntry> entries = roster.getEntries();
-                System.out.println("Usuarios:");
+    
+                // Crear un nuevo Stage para mostrar los usuarios conectados
+                Stage usuariosStage = new Stage();
+                usuariosStage.setTitle("Lista de Usuarios Conectados");
+    
+                VBox usuariosBox = new VBox(10);
+                usuariosBox.setPadding(new Insets(20));
+                usuariosBox.setAlignment(Pos.CENTER);
+                usuariosBox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+                // Añadir los usuarios conectados al VBox
                 for (RosterEntry entry : entries) {
                     Presence presence = roster.getPresence(entry.getJid());
-                    String presenceMessage = presence.isAvailable() ? "Conectado" : "Desconectado";
-                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    System.out.println(entry.getJid() + " está " + presenceMessage + " - Mensaje de presencia: " + statusMessage);
+                    String status = presence.isAvailable() ? "Conectado" : "Desconectado";
+                    String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+    
+                    HBox userItem = new HBox(10);
+                    userItem.setPadding(new Insets(10));
+                    userItem.setAlignment(Pos.CENTER_LEFT);
+                    userItem.setStyle("-fx-background-color: #34495e; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+    
+                    Label userLabel = new Label(entry.getJid().toString());
+                    userLabel.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-font-weight: bold;");
+    
+                    Label statusLabel = new Label(status);
+                    statusLabel.setStyle(status.equals("Conectado") ? "-fx-text-fill: #2ecc71; -fx-font-size: 14px;" : "-fx-text-fill: #e74c3c; -fx-font-size: 14px;");
+    
+                    Label messageLabel = new Label(presenceMessage);
+                    messageLabel.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 12px;");
+    
+                    userItem.getChildren().addAll(userLabel, statusLabel, messageLabel);
+                    usuariosBox.getChildren().add(userItem);
                 }
-
-                // Mostrar tu propio estado y mensaje de presencia
-                Presence ownPresence = roster.getPresence(connection.getUser().asBareJid());
-                String ownPresenceMessage = ownPresence.isAvailable() ? "Conectado" : "Desconectado";
-                String ownStatusMessage = ownPresence.getStatus() != null ? ownPresence.getStatus() : "Sin mensaje de presencia";
-                System.out.println(connection.getUser().asBareJid() + " está " + ownPresenceMessage + " - Mensaje de presencia: " + ownStatusMessage);
-
+    
+                // Crear un ScrollPane para el VBox en caso de que haya muchos usuarios
+                ScrollPane scrollPane = new ScrollPane(usuariosBox);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setStyle("-fx-background-color: #2c3e50;");
+    
+                Scene scene = new Scene(scrollPane, 400, 300);
+                usuariosStage.setScene(scene);
+                usuariosStage.show();
+    
             } catch (Exception e) {
                 System.out.println("Error al obtener la lista de usuarios conectados: " + e.getMessage());
                 e.printStackTrace();
@@ -836,6 +899,7 @@ public static boolean iniciarSesion(String domain, String username, String passw
             System.out.println("No has iniciado sesión.");
         }
     }
+    
 
     public static void definirMensajePresencia() {
         if (connection != null && connection.isAuthenticated()) {
