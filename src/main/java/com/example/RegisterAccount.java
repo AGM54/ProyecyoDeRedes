@@ -735,40 +735,42 @@ public static boolean iniciarSesion(String domain, String username, String passw
         }
     }
 
-    public static void eliminarCuenta(String domain, String username, String password) {
-        try {
-            // Configurar el DNS resolver
-            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
-
-            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                    .setXmppDomain(domain)
-                    .setHost(domain)
-                    .setPort(5222)
-                    .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
-                    .build();
-
-            connection = new XMPPTCPConnection(config);
-
-            try {
-                connection.connect();
-                connection.login(username, password);
-                System.out.println("Sesión iniciada exitosamente");
-
-                AccountManager accountManager = AccountManager.getInstance(connection);
-                accountManager.deleteAccount();
-                System.out.println("Cuenta eliminada exitosamente.");
-
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                System.out.println("Error al eliminar la cuenta: " + e.getMessage());
-                e.printStackTrace();
-            } finally {
-                connection.disconnect();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void eliminarCuentaUI() {
+        Stage stage = new Stage();
+        stage.setTitle("Eliminar cuenta");
+    
+        VBox vbox = new VBox(15);
+        vbox.setPadding(new Insets(20));
+        vbox.setAlignment(Pos.CENTER);
+        vbox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+        Label label = new Label("Eliminar cuenta");
+        label.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 16px; -fx-font-weight: bold;");
+        
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Usuario");
+        usernameField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Contraseña");
+        passwordField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        
+        Button deleteButton = createStyledButton("Eliminar", "#F44336", "white", "#D32F2F");
+    
+        vbox.getChildren().addAll(label, usernameField, passwordField, deleteButton);
+    
+        Scene scene = new Scene(vbox, 300, 250);
+        stage.setScene(scene);
+        stage.show();
+    
+        deleteButton.setOnAction(e -> {
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            eliminarCuenta("alumchat.lol", username, password);
+            stage.close();
+        });
     }
-
+    
     public static void agregarContacto(String jidStr) {
         if (connection != null && connection.isAuthenticated()) {
             try {
