@@ -41,7 +41,26 @@ import java.io.IOException;
 import java.util.Collection;
 
 
+import org.jivesoftware.smackx.muc.MultiUserChatManager;
+import org.jivesoftware.smackx.muc.MultiUserChat;
+import org.jxmpp.jid.parts.Resourcepart;
+
+import org.jivesoftware.smack.*;
+
+
+import org.jxmpp.jid.DomainBareJid;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+
 import org.jivesoftware.smack.debugger.ConsoleDebugger;
+
+import org.jivesoftware.smack.roster.SubscribeListener;
+
 
 public class RegisterAccount extends Application {
 
@@ -186,33 +205,150 @@ public class RegisterAccount extends Application {
 
         primaryStage.setScene(scene);
     }
+    
 
     private void showMessagingOptions(Stage primaryStage) {
-        Stage optionsStage = new Stage();
-        optionsStage.setTitle("Opciones de Mensajería");
-    
-        VBox optionsBox = new VBox(15);
-        optionsBox.setPadding(new Insets(20));
-        optionsBox.setAlignment(Pos.CENTER);
-        optionsBox.setStyle("-fx-background-color: #000000; -fx-border-radius: 10px; -fx-background-radius: 10px;");
-    
-        // Crear botones con estilos personalizados
-        Button chatButton = createStyledButton("Chat en tiempo real", "#4CAF50", "white", "#388E3C");
-        Button sendMessageButton = createStyledButton("Enviar mensaje a un usuario", "#FF9800", "white", "#F57C00");
-        Button sendFileButton = createStyledButton("Enviar archivo", "#2196F3", "white", "#1976D2");
-    
-        // Asignar acciones a los botones
-        chatButton.setOnAction(e -> iniciarChatUI(primaryStage));
-        sendMessageButton.setOnAction(e -> enviarMensajeUI());
-        sendFileButton.setOnAction(e -> enviarArchivoUI());
-    
-        // Añadir los botones al VBox
-        optionsBox.getChildren().addAll(chatButton, sendMessageButton, sendFileButton);
-    
-        Scene optionsScene = new Scene(optionsBox, 400, 250);
-        optionsStage.setScene(optionsScene);
-        optionsStage.show();
+    Stage optionsStage = new Stage();
+    optionsStage.setTitle("Opciones de Mensajería");
+
+    VBox optionsBox = new VBox(15);
+    optionsBox.setPadding(new Insets(20));
+    optionsBox.setAlignment(Pos.CENTER);
+    optionsBox.setStyle("-fx-background-color: #000000; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+
+    // Crear botones con estilos personalizados
+    Button chatButton = createStyledButton("Chat en tiempo real", "#4CAF50", "white", "#388E3C");
+    Button sendMessageButton = createStyledButton("Enviar mensaje a un usuario", "#FF9800", "white", "#F57C00");
+    Button sendFileButton = createStyledButton("Enviar archivo", "#2196F3", "white", "#1976D2");
+    Button groupChatButton = createStyledButton("Chat Grupal", "#9C27B0", "white", "#7B1FA2");
+
+    // Asignar acciones a los botones
+    chatButton.setOnAction(e -> iniciarChatUI(primaryStage));
+    sendMessageButton.setOnAction(e -> enviarMensajeUI());
+    sendFileButton.setOnAction(e -> enviarArchivoUI());
+    groupChatButton.setOnAction(e -> iniciarChatGrupalUI(primaryStage)); // Aquí llamas a la UI del chat grupal
+
+    // Añadir los botones al VBox
+    optionsBox.getChildren().addAll(chatButton, sendMessageButton, sendFileButton, groupChatButton);
+
+    Scene optionsScene = new Scene(optionsBox, 400, 250);
+    optionsStage.setScene(optionsScene);
+    optionsStage.show();
+}
+private void iniciarChatGrupalUI(Stage primaryStage) {
+    Stage groupChatStage = new Stage();
+    groupChatStage.setTitle("Chat Grupal");
+
+    VBox groupChatBox = new VBox(10);
+    groupChatBox.setPadding(new Insets(20));
+    groupChatBox.setAlignment(Pos.CENTER);
+
+    chatArea = new VBox();
+    chatArea.setStyle("-fx-background-color: #000000;");
+    chatArea.setPrefHeight(400);
+
+    ScrollPane scrollPane = new ScrollPane(chatArea);
+    scrollPane.setFitToWidth(true);
+    scrollPane.setStyle("-fx-background: #000000;");
+
+    TextField messageField = new TextField();
+    messageField.setPromptText("Escribe tu mensaje...");
+
+    Button sendButton = new Button("Enviar");
+
+    HBox messageBox = new HBox(10, messageField, sendButton);
+    messageBox.setAlignment(Pos.CENTER);
+    groupChatBox.getChildren().addAll(scrollPane, messageBox);
+
+    Scene groupChatScene = new Scene(groupChatBox, 500, 500);
+    groupChatStage.setScene(groupChatScene);
+    groupChatStage.show();
+
+    // Configurar el chat grupal
+    seleccionarSalaChatGrupal();
+
+    // Añadir el listener de envío de mensajes
+    sendButton.setOnAction(e -> {
+        String message = messageField.getText();
+        if (!message.isEmpty()) {
+            enviarMensajeGrupal(message);
+            agregarMensaje("Tú: " + message, true);
+            messageField.clear();
+        }
+    });
+}
+
+private void seleccionarSalaChatGrupal() {
+    TextInputDialog dialog = new TextInputDialog();
+    dialog.setTitle("Seleccionar sala de chat grupal");
+    dialog.setHeaderText("Unirse o crear una sala de chat grupal");
+    dialog.setContentText("Ingrese el nombre de la sala:");
+
+    dialog.showAndWait().ifPresent(nombreSala -> {
+        try {
+            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
+            EntityBareJid salaJid = JidCreate.entityBareFrom(nombreSala + "@conference.alumchat.lol");
+
+            // Obtener la sala de chat grupal
+            MultiUserChat chatGrupal = manager.getMultiUserChat(salaJid);
+
+            // Unirse a la sala si no estás ya unido
+            if (!chatGrupal.isJoined()) {
+                chatGrupal.join(Resourcepart.from(username));
+            }
+
+            agregarMensaje("Te has unido a la sala: " + nombreSala, false);
+
+            // Listener para recibir mensajes en el grupo
+            chatGrupal.addMessageListener((message) -> {
+                Platform.runLater(() -> {
+                    if (message.getBody() != null) {
+                        agregarMensaje(message.getFrom() + ": " + message.getBody(), false);
+                    }
+                });
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    });
+}
+
+
+
+private void configureRoom(MultiUserChat chatGrupal) {
+    try {
+        // Aquí podrías realizar configuraciones básicas si el servidor lo permite de manera directa.
+        // Sin el uso de formularios, estarías limitado a la configuración predeterminada del servidor.
+
+        // Te unes a la sala, que podría haber sido creada previamente o no
+        if (!chatGrupal.isJoined()) {
+            chatGrupal.join(Resourcepart.from(username));
+        }
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
+
+
+private void enviarMensajeGrupal(String mensaje) {
+    try {
+        if (connection != null && connection.isAuthenticated()) {
+            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
+            MultiUserChat chatGrupal = manager.getMultiUserChat(JidCreate.entityBareFrom("nombreSala@conference.alumchat.lol"));
+            chatGrupal.sendMessage(mensaje);
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
+    } catch (Exception e) {
+        System.out.println("Error al enviar mensaje grupal: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
+
+
     
 
     private void showContactOptions(Stage primaryStage) {
@@ -402,20 +538,7 @@ public class RegisterAccount extends Application {
             EntityBareJid bareJid = JidCreate.entityBareFrom(destinatario);
             boolean isAvailable = false;
 
-            for (int i = 0; i < 5; i++) { // Intentar 5 veces
-                Presence presence = roster.getPresence(bareJid);
-                System.out.println("Presencia del destinatario: " + presence.isAvailable());
-                if (presence.isAvailable()) {
-                    isAvailable = true;
-                    break;
-                }
-                Thread.sleep(2000); // Esperar 2 segundos antes de intentar de nuevo
-            }
-
-            if (!isAvailable) {
-                System.out.println("El destinatario no está disponible para recibir archivos.");
-                return;
-            }
+     
 
             EntityFullJid fullJid = JidCreate.entityFullFrom(destinatario + "/Smack");
             System.out.println("JID del destinatario creado: " + fullJid.toString());
@@ -473,20 +596,41 @@ public class RegisterAccount extends Application {
 
 
     private void eliminarCuentaUI() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Eliminar cuenta");
-        dialog.setHeaderText("Eliminar cuenta");
-        dialog.setContentText("Ingrese el nombre de usuario:");
-
-        dialog.showAndWait().ifPresent(username -> {
-            TextInputDialog passwordDialog = new TextInputDialog();
-            passwordDialog.setTitle("Eliminar cuenta");
-            passwordDialog.setHeaderText("Eliminar cuenta");
-            passwordDialog.setContentText("Ingrese la contraseña:");
-
-            passwordDialog.showAndWait().ifPresent(password -> eliminarCuenta("alumchat.lol", username, password));
+        Stage stage = new Stage();
+        stage.setTitle("Eliminar cuenta");
+    
+        VBox vbox = new VBox(15);
+        vbox.setPadding(new Insets(20));
+        vbox.setAlignment(Pos.CENTER);
+        vbox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+    
+        Label label = new Label("Eliminar cuenta");
+        label.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 16px; -fx-font-weight: bold;");
+        
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Usuario");
+        usernameField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Contraseña");
+        passwordField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+        
+        Button deleteButton = createStyledButton("Eliminar", "#F44336", "white", "#D32F2F");
+    
+        vbox.getChildren().addAll(label, usernameField, passwordField, deleteButton);
+    
+        Scene scene = new Scene(vbox, 300, 250);
+        stage.setScene(scene);
+        stage.show();
+    
+        deleteButton.setOnAction(e -> {
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            eliminarCuenta("alumchat.lol", username, password);
+            stage.close();
         });
     }
+    
 
     private void agregarContactoUI() {
         TextInputDialog dialog = new TextInputDialog();
@@ -623,6 +767,7 @@ public static boolean iniciarSesion(String domain, String username, String passw
 
             connection.login(username, password);
             System.out.println("Sesión iniciada exitosamente con el usuario: " + username);
+            agregarSubscribeListener();
 
             // Mostrar las características del servidor
             ServiceDiscoveryManager discoManager = ServiceDiscoveryManager.getInstanceFor(connection);
@@ -636,8 +781,19 @@ public static boolean iniciarSesion(String domain, String username, String passw
             // Añadir el listener para mensajes entrantes
             ChatManager chatManager = ChatManager.getInstanceFor(connection);
             chatManager.addIncomingListener((from, message, chat) -> {
-                System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
+    Platform.runLater(() -> {
+        // Usar una instancia de RegisterAccount
+        RegisterAccount registerAccountInstance = new RegisterAccount();
+        
+        if (chat.equals(currentChat)) {
+            registerAccountInstance.agregarMensaje(from.toString() + ": " + message.getBody(), false);
+        } else {
+            registerAccountInstance.addNotification("Nuevo mensaje de " + from + ": " + message.getBody());
+        }
+    });
+
             });
+            
             System.out.println("Listener de mensajes entrantes añadido.");
 
             // Añadir listener para cambios en la presencia
@@ -654,9 +810,15 @@ public static boolean iniciarSesion(String domain, String username, String passw
 
                 @Override
                 public void presenceChanged(Presence presence) {
-                    String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-                    System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
-                    addNotification("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+                    Platform.runLater(() -> {
+                      String statusMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+            System.out.println("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+            addNotification("Cambio en la presencia: " + presence.getFrom() + " - " + statusMessage);
+          
+                        
+       
+        });
+                    
                 }
             });
             System.out.println("Listener de presencia añadido.");
@@ -674,16 +836,12 @@ public static boolean iniciarSesion(String domain, String username, String passw
             connection.sendStanza(presence);
             System.out.println("Presencia establecida como disponible.");
 
-            // Enviar un mensaje simple para verificar la conexión
-            String destinatario = "gla21299@alumchat.lol";
-            enviarMensaje(destinatario, "Mensaje de prueba para verificar conexión");
-            System.out.println("Mensaje de prueba enviado a " + destinatario);
-
+        
             // Intentar enviar un archivo
             File archivo = new File("C:\\Users\\marce\\Downloads\\icono.png");
             if (archivo.exists()) {
                 System.out.println("El archivo existe: " + archivo.getAbsolutePath());
-                enviarArchivo(destinatario, archivo);
+               // enviarArchivo(destinatario, archivo);
             } else {
                 System.out.println("El archivo no existe: " + archivo.getAbsolutePath());
             }
@@ -725,15 +883,26 @@ public static boolean iniciarSesion(String domain, String username, String passw
             e.printStackTrace();
         }
     }
+public static void cerrarSesion() {
+    if (connection != null && connection.isConnected()) {
+        try {
+            // Enviar presencia 'unavailable' antes de desconectarse
+            Presence presence = new Presence(Presence.Type.unavailable);
+            connection.sendStanza(presence);  // Notifica al servidor que te desconectas
+            System.out.println("Presencia establecida como 'unavailable'.");
 
-    public static void cerrarSesion() {
-        if (connection != null && connection.isConnected()) {
+            // Desconectar la conexión
             connection.disconnect();
             System.out.println("Sesión cerrada exitosamente.");
-        } else {
-            System.out.println("No hay ninguna sesión activa.");
+        } catch (SmackException.NotConnectedException | InterruptedException e) {
+            System.out.println("Error al cerrar la sesión: " + e.getMessage());
+            e.printStackTrace();
         }
+    } else {
+        System.out.println("No hay ninguna sesión activa.");
     }
+}
+
 
     public static void eliminarCuenta(String domain, String username, String password) {
         try {
@@ -785,13 +954,41 @@ public static boolean iniciarSesion(String domain, String username, String passw
         }
     }
 
+
+  public void checkUserPresence(String userJid) {
+    try {
+        // Verificar que la conexión esté autenticada
+        if (connection != null && connection.isAuthenticated()) {
+            // Crear el JID del usuario del cual deseas obtener el estado de presencia
+            EntityBareJid jid = JidCreate.entityBareFrom(userJid);
+
+            // Obtener el roster (lista de contactos)
+            Roster roster = Roster.getInstanceFor(connection);
+
+            // Obtener la presencia del usuario
+            Presence presence = roster.getPresence(jid);
+
+            // Mostrar el tipo de presencia y el mensaje personalizado
+            System.out.println("Tipo de presencia de " + userJid + ": " + presence.getType());
+            System.out.println("Mensaje de presencia: " + (presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia"));
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+
+
+    
     public static void verContactos() {
+        
         if (connection != null && connection.isAuthenticated()) {
             try {
                 Roster roster = Roster.getInstanceFor(connection);
                 Collection<RosterEntry> entries = roster.getEntries();
     
-                // Crear un nuevo Stage para mostrar los contactos
                 Stage contactosStage = new Stage();
                 contactosStage.setTitle("Lista de Contactos");
     
@@ -800,29 +997,8 @@ public static boolean iniciarSesion(String domain, String username, String passw
                 contactsBox.setAlignment(Pos.CENTER);
                 contactsBox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
     
-                // Añadir los contactos al VBox
-                for (RosterEntry entry : entries) {
-                    Presence presence = roster.getPresence(entry.getJid());
-                    String status = presence.isAvailable() ? "Conectado" : "Desconectado";
-                    String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
-    
-                    HBox contactItem = new HBox(10);
-                    contactItem.setPadding(new Insets(10));
-                    contactItem.setAlignment(Pos.CENTER_LEFT);
-                    contactItem.setStyle("-fx-background-color: #34495e; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-    
-                    Label contactLabel = new Label(entry.getJid().toString());
-                    contactLabel.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-font-weight: bold;");
-    
-                    Label statusLabel = new Label(status);
-                    statusLabel.setStyle(status.equals("Conectado") ? "-fx-text-fill: #2ecc71; -fx-font-size: 14px;" : "-fx-text-fill: #e74c3c; -fx-font-size: 14px;");
-    
-                    Label messageLabel = new Label(presenceMessage);
-                    messageLabel.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 12px;");
-    
-                    contactItem.getChildren().addAll(contactLabel, statusLabel, messageLabel);
-                    contactsBox.getChildren().add(contactItem);
-                }
+                // Llama al método para actualizar la lista de contactos
+                actualizarListaDeContactos(roster, entries, contactsBox);
     
                 // Crear un ScrollPane para el VBox en caso de que haya muchos contactos
                 ScrollPane scrollPane = new ScrollPane(contactsBox);
@@ -833,6 +1009,27 @@ public static boolean iniciarSesion(String domain, String username, String passw
                 contactosStage.setScene(scene);
                 contactosStage.show();
     
+                // Añadir el listener para cambios en la presencia
+                roster.addRosterListener(new RosterListener() {
+                    @Override
+                    public void entriesAdded(Collection<Jid> addresses) {}
+    
+                    @Override
+                    public void entriesUpdated(Collection<Jid> addresses) {}
+    
+                    @Override
+                    public void entriesDeleted(Collection<Jid> addresses) {}
+    
+                    @Override
+                    public void presenceChanged(Presence presence) {
+                        Platform.runLater(() -> {
+                            // Actualiza la lista de contactos cuando cambia la presencia
+                            contactsBox.getChildren().clear();
+                            actualizarListaDeContactos(roster, entries, contactsBox);
+                        });
+                    }
+                });
+    
             } catch (Exception e) {
                 System.out.println("Error al obtener la lista de contactos: " + e.getMessage());
                 e.printStackTrace();
@@ -842,6 +1039,34 @@ public static boolean iniciarSesion(String domain, String username, String passw
         }
     }
     
+    private static void actualizarListaDeContactos(Roster roster, Collection<RosterEntry> entries, VBox contactsBox) {
+        for (RosterEntry entry : entries) {
+            Presence presence = roster.getPresence(entry.getJid());
+    
+            // Aquí es donde obtienes la presencia actualizada
+            String status = presence.isAvailable() ? "Conectado" : "Desconectado";
+            String presenceMessage = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+    
+            HBox contactItem = new HBox(10);
+            contactItem.setPadding(new Insets(10));
+            contactItem.setAlignment(Pos.CENTER_LEFT);
+            contactItem.setStyle("-fx-background-color: #34495e; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+    
+            Label contactLabel = new Label(entry.getJid().toString());
+            contactLabel.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-font-weight: bold;");
+    
+            Label statusLabel = new Label(status);
+            statusLabel.setStyle(status.equals("Conectado") ? "-fx-text-fill: #2ecc71; -fx-font-size: 14px;" : "-fx-text-fill: #e74c3c; -fx-font-size: 14px;");
+    
+            Label messageLabel = new Label(presenceMessage);
+            messageLabel.setStyle("-fx-text-fill: #bdc3c7; -fx-font-size: 12px;");
+    
+            contactItem.getChildren().addAll(contactLabel, statusLabel, messageLabel);
+            contactsBox.getChildren().add(contactItem);
+        }
+    }
+    
+
     
     public static void mostrarUsuariosConectados() {
         if (connection != null && connection.isAuthenticated()) {
@@ -949,6 +1174,25 @@ public static boolean iniciarSesion(String domain, String username, String passw
 }
 
 
+
+
+private static void agregarSubscribeListener() {
+    Roster roster = Roster.getInstanceFor(connection);
+    roster.addSubscribeListener((from, subscribeRequest) -> {
+        try {
+            roster.createEntry(from.asEntityBareJidIfPossible(), from.asEntityBareJidIfPossible().toString(), null);
+            Presence subscribe = new Presence(Presence.Type.subscribe);
+            subscribe.setTo(from);
+            connection.sendStanza(subscribe);
+            return SubscribeListener.SubscribeAnswer.Approve;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return SubscribeListener.SubscribeAnswer.Deny;
+        }
+    });
+}
+
+
     private void showNotifications(Stage primaryStage) {
         ListView<String> notificationListView = new ListView<>(notifications);
         VBox notificationBox = new VBox(10, new Label("Notificaciones"), notificationListView);
@@ -960,4 +1204,4 @@ public static boolean iniciarSesion(String domain, String username, String passw
         popup.setAutoHide(true);
         popup.show(primaryStage);
     }
-}
+} 
