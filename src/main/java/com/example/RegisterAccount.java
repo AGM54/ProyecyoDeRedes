@@ -40,6 +40,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
+import javax.swing.JFileChooser;
+import java.util.Base64;
+
 
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muc.MultiUserChat;
@@ -52,10 +55,12 @@ import org.jxmpp.jid.DomainBareJid;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
-
+import java.util.Base64;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.jivesoftware.smack.debugger.ConsoleDebugger;
 
@@ -318,10 +323,7 @@ private void seleccionarSalaChatGrupal() {
 
 private void configureRoom(MultiUserChat chatGrupal) {
     try {
-        // Aquí podrías realizar configuraciones básicas si el servidor lo permite de manera directa.
-        // Sin el uso de formularios, estarías limitado a la configuración predeterminada del servidor.
-
-        // Te unes a la sala, que podría haber sido creada previamente o no
+    
         if (!chatGrupal.isJoined()) {
             chatGrupal.join(Resourcepart.from(username));
         }
@@ -514,19 +516,97 @@ private void enviarMensajeGrupal(String mensaje) {
         });
     }
 
-    private void enviarArchivoUI() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Seleccionar archivo para enviar");
-        File file = fileChooser.showOpenDialog(null);
-        if (file != null) {
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Enviar archivo");
-            dialog.setHeaderText("Enviar archivo");
-            dialog.setContentText("Ingrese el JID del destinatario:");
+   private void enviarArchivoUI() {
+    FileChooser fileChooser = new FileChooser();
+    fileChooser.setTitle("Seleccionar archivo para enviar");
+    File file = fileChooser.showOpenDialog(null);
+    
+    if (file != null && file.exists()) {  // Asegurarse de que el archivo exista
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Enviar archivo");
+        dialog.setHeaderText("Enviar archivo en Base64");
+        dialog.setContentText("Ingrese el JID del destinatario:");
 
-            dialog.showAndWait().ifPresent(destinatario -> enviarArchivo(destinatario, file));
-        }
+        dialog.showAndWait().ifPresent(destinatario -> enviarArchivoBase64(destinatario, file));
+    } else {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Archivo no encontrado");
+        alert.setContentText("El archivo seleccionado no existe o no se puede acceder.");
+        alert.showAndWait();
     }
+}
+
+
+
+public static void enviarArchivoBase64(String destinatario, File archivo) {
+    try {
+        if (connection != null && connection.isAuthenticated()) {
+            System.out.println("Conexión autenticada.");
+            System.out.println("Archivo existe: " + archivo.getAbsolutePath());
+
+            // Leer el archivo y codificarlo en Base64
+            byte[] fileBytes = Files.readAllBytes(archivo.toPath());
+            String encodedFile = Base64.getEncoder().encodeToString(fileBytes);
+
+            System.out.println("Archivo codificado en Base64: " + encodedFile);
+
+            // Enviar el archivo como mensaje en Base64
+            enviarMensaje(destinatario, encodedFile);
+
+            System.out.println("Archivo enviado a " + destinatario + " en formato Base64.");
+        } else {
+            System.out.println("No has iniciado sesión.");
+        }
+    } catch (Exception e) {
+        System.out.println("Error al enviar archivo en Base64: " + e.getMessage());
+        e.printStackTrace();
+    }
+}
+
+public static void recibirArchivoBase64(String base64FileContent) {
+    try {
+    
+        byte[] decodedBytes = Base64.getDecoder().decode(base64FileContent);
+
+       
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Seleccione la ubicación para guardar el archivo");
+
+     
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+  
+        int userSelection = fileChooser.showSaveDialog(null);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+         
+            File fileToSave = fileChooser.getSelectedFile();
+            Path outputPath = fileToSave.toPath();
+
+           
+            Files.createDirectories(outputPath.getParent());
+
+      
+            Files.write(outputPath, decodedBytes);
+
+          
+            System.out.println("Archivo guardado en: " + outputPath.toString());
+
+            addNotification("Archivo recibido y guardado en: " + outputPath.toString());
+        } else {
+            System.out.println("Guardado cancelado por el usuario.");
+        }
+
+    } catch (Exception e) {
+        // Manejar cualquier error que ocurra durante la decodificación o escritura del archivo
+        System.out.println("Error al recibir y guardar el archivo: " + e.getMessage());
+        e.printStackTrace();
+    }
+
+}
+
+
     public static void enviarArchivo(String destinatario, File archivo) {
     try {
         if (connection != null && connection.isAuthenticated()) {
@@ -781,17 +861,36 @@ public static boolean iniciarSesion(String domain, String username, String passw
             // Añadir el listener para mensajes entrantes
             ChatManager chatManager = ChatManager.getInstanceFor(connection);
             chatManager.addIncomingListener((from, message, chat) -> {
-    Platform.runLater(() -> {
-        // Usar una instancia de RegisterAccount
-        RegisterAccount registerAccountInstance = new RegisterAccount();
-        
-        if (chat.equals(currentChat)) {
-            registerAccountInstance.agregarMensaje(from.toString() + ": " + message.getBody(), false);
-        } else {
-            registerAccountInstance.addNotification("Nuevo mensaje de " + from + ": " + message.getBody());
-        }
-    });
+               // System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
+            
+                // Crear una instancia de RegisterAccount para llamar al método no estático
+                RegisterAccount registerAccount = new RegisterAccount();
+                
+                // Mostrar el mensaje en la interfaz gráfica (chatArea)
+                Platform.runLater(() -> registerAccount.agregarMensaje(from.toString() + ": " + message.getBody(), false));
+            
+                // Añadir el mensaje a la lista de notificaciones
+                addNotification("Nuevo mensaje de " + from + ": " + message.getBody());
 
+                if (message.getBody() != null) {
+                    System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
+            
+                    // Verificar si el mensaje contiene un archivo en Base64
+                    if (message.getBody().startsWith("BASE64FILE:")) {
+                        // Si el mensaje comienza con "BASE64FILE:", extraer el contenido Base64
+                        String base64Content = message.getBody().substring("BASE64FILE:".length());
+                        String outputFilePath = "C:\\Users\\marce\\Desktop";  // Definir ruta para guardar el archivo
+                        recibirArchivoBase64(base64Content);
+                    } else if (message.getBody().matches("^[A-Za-z0-9+/=\\s]+$")) {
+                        // Si el mensaje parece ser una cadena Base64 (sin prefijo)
+                        
+                        String outputFilePath = "C:\\Users\\marce\\Desktop";  // Definir ruta para guardar el archivo
+        recibirArchivoBase64(message.getBody());
+                    } else {
+                        registerAccount.agregarMensaje(from.toString() + ": " + message.getBody(), false);
+                        addNotification("Nuevo mensaje de " + from + ": " + message.getBody());
+                    }
+                }
             });
             
             System.out.println("Listener de mensajes entrantes añadido.");
@@ -860,7 +959,16 @@ public static boolean iniciarSesion(String domain, String username, String passw
     }
 }
 
-
+public boolean isBase64(String str) {
+    try {
+        // Decodificar y verificar si la cadena está en Base64
+        byte[] decodedBytes = Base64.getDecoder().decode(str);
+        return true;
+    } catch (IllegalArgumentException e) {
+        // Si no es Base64, devolver false
+        return false;
+    }
+}
     
 
     public static void enviarMensaje(String destinatario, String mensaje) {
