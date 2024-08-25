@@ -273,7 +273,7 @@ private void iniciarChatGrupalUI(Stage primaryStage) {
     groupChatStage.show();
 
     // Configurar el chat grupal
-    seleccionarSalaChatGrupal();
+    //seleccionarSalaChatGrupal();
 
     // Añadir el listener de envío de mensajes
     sendButton.setOnAction(e -> {
@@ -285,50 +285,53 @@ private void iniciarChatGrupalUI(Stage primaryStage) {
         }
     });
 }
+
 private MultiUserChat chatGrupal;
 private String nombreSalaActual;  // Variable para almacenar el nombre de la sala actual
 
-private void seleccionarSalaChatGrupal() {
-    // Crear un cuadro de diálogo para ingresar el nombre de la sala
-    TextInputDialog dialog = new TextInputDialog();
-    dialog.setTitle("Seleccionar sala de chat grupal");
-    dialog.setHeaderText("Unirse o crear una sala de chat grupal");
-    dialog.setContentText("Ingrese el nombre de la sala:");
+// private void seleccionarSalaChatGrupal() {
+//     // Crear un cuadro de diálogo para ingresar el nombre de la sala
+//     TextInputDialog dialog = new TextInputDialog();
+//     dialog.setTitle("Seleccionar sala de chat grupal");
+//     dialog.setHeaderText("Unirse o crear una sala de chat grupal");
+//     dialog.setContentText("Ingrese el nombre de la sala:");
 
-    // Esperar a que el usuario ingrese el nombre
-    dialog.showAndWait().ifPresent(nombreSala -> {
-        try {
-            // Almacenar el nombre de la sala ingresado por el usuario
-            nombreSalaActual = nombreSala;
+//     // Esperar a que el usuario ingrese el nombre
+//     dialog.showAndWait().ifPresent(nombreSala -> {
+//         try {
+//             // Almacenar el nombre de la sala ingresado por el usuario
+//             nombreSalaActual = nombreSala;
 
-            // Crear el JID completo de la sala basado en el nombre ingresado
-            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
-            EntityBareJid salaJid = JidCreate.entityBareFrom(nombreSalaActual + "@conference.alumchat.lol");
+//             // Crear el JID completo de la sala basado en el nombre ingresado
+//             MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
+//             EntityBareJid salaJid = JidCreate.entityBareFrom(nombreSalaActual + "@conference.alumchat.lol");
 
-            // Obtener la sala de chat grupal o crearla si no existe
-            chatGrupal = manager.getMultiUserChat(salaJid);
+//             // Obtener la sala de chat grupal o crearla si no existe
+//             chatGrupal = manager.getMultiUserChat(salaJid);
 
-            // Unirse a la sala si aún no lo has hecho
-            if (!chatGrupal.isJoined()) {
-                chatGrupal.join(Resourcepart.from(username));
-            }
+//             // Unirse a la sala si aún no lo has hecho
+//             if (!chatGrupal.isJoined()) {
+//                 chatGrupal.join(Resourcepart.from(username));
+//             }
 
-            // Mostrar un mensaje confirmando la unión a la sala
-            agregarMensaje("Te has unido a la sala: " + nombreSalaActual, false);
+//             // Mostrar un mensaje confirmando la unión a la sala
+//             agregarMensaje("Te has unido a la sala: " + nombreSalaActual, false);
 
-            // Listener para recibir mensajes en el chat grupal
-            chatGrupal.addMessageListener(message -> {
-                Platform.runLater(() -> {
-                    if (message.getBody() != null) {
-                        agregarMensaje(message.getFrom() + ": " + message.getBody(), false);
-                    }
-                });
-            });
+//             // Listener para recibir mensajes en el chat grupal
+//             chatGrupal.addMessageListener(message -> {
+//                 Platform.runLater(() -> {
+//                     if (message.getBody() != null) {
+//                         agregarMensaje(message.getFrom() + ": " + message.getBody(), false);
+//                     }
+//                 });
+//             });
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    });
+//         } catch (Exception e) {
+//             e.printStackTrace();
+//         }
+//     });
+// }
+
 
 private void configureRoom(MultiUserChat chatGrupal) {
     try {
@@ -345,15 +348,12 @@ private void configureRoom(MultiUserChat chatGrupal) {
 
 private void enviarMensajeGrupal(String mensaje) {
     try {
-        // Verificar que el usuario esté autenticado y conectado a un chat grupal
-        if (chatGrupal != null && connection.isAuthenticated()) {
-            // Enviar el mensaje al grupo
+        if (connection != null && connection.isAuthenticated()) {
+            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
+            MultiUserChat chatGrupal = manager.getMultiUserChat(JidCreate.entityBareFrom("nombreSala@conference.alumchat.lol"));
             chatGrupal.sendMessage(mensaje);
-
-            // Mostrar el mensaje en la interfaz gráfica del usuario
-            agregarMensaje("Tú: " + mensaje, true);
         } else {
-            System.out.println("No has iniciado sesión o no estás en un chat grupal.");
+            System.out.println("No has iniciado sesión.");
         }
     } catch (Exception e) {
         System.out.println("Error al enviar mensaje grupal: " + e.getMessage());
@@ -486,31 +486,37 @@ private void enviarMensajeGrupal(String mensaje) {
 
         seleccionarUsuarioChat();
     }
+private boolean listenerAñadido = false;
 
-    private void seleccionarUsuarioChat() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Seleccionar usuario");
-        dialog.setHeaderText("Seleccionar usuario");
-        dialog.setContentText("Ingrese el JID del usuario con el que desea chatear:");
+private void seleccionarUsuarioChat() {
+    TextInputDialog dialog = new TextInputDialog();
+    dialog.setTitle("Seleccionar usuario");
+    dialog.setHeaderText("Seleccionar usuario");
+    dialog.setContentText("Ingrese el JID del usuario con el que desea chatear:");
 
-        dialog.showAndWait().ifPresent(destinatario -> {
-            try {
-                EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
-                currentChat = ChatManager.getInstanceFor(connection).chatWith(jid);
-                agregarMensaje("Chateando con: " + destinatario, false);
+    dialog.showAndWait().ifPresent(destinatario -> {
+        try {
+            EntityBareJid jid = JidCreate.entityBareFrom(destinatario);
+            currentChat = ChatManager.getInstanceFor(connection).chatWith(jid);
+            agregarMensaje("Chateando con: " + destinatario, false);
 
+            if (!listenerAñadido) {
                 // Escuchar mensajes entrantes
                 ChatManager.getInstanceFor(connection).addIncomingListener((from, message, chat) -> {
-                    if (chat.equals(currentChat)) {
-                        agregarMensaje(from.toString() + ": " + message.getBody(), false);
+                    if (chat.getXmppAddressOfChatPartner().equals(currentChat.getXmppAddressOfChatPartner())) {
+                        // Verifica si el mensaje proviene del chat actual
+                        Platform.runLater(() -> agregarMensaje(from.toString() + ": " + message.getBody(), false));
                     }
                 });
-
-            } catch (XmppStringprepException e) {
-                e.printStackTrace();
+                listenerAñadido = true; // Evita añadir múltiples listeners
             }
-        });
-    }
+
+        } catch (XmppStringprepException e) {
+            e.printStackTrace();
+        }
+    });
+}
+
 
     private void enviarMensajeUI() {
         TextInputDialog dialog = new TextInputDialog();
@@ -564,7 +570,7 @@ public static void enviarArchivoBase64(String destinatario, File archivo) {
             System.out.println("Archivo codificado en Base64: " + encodedFile);
 
             // Enviar el archivo como mensaje en Base64
-            enviarMensaje(destinatario, encodedFile);
+            enviarMensaje(destinatario, "BASE64FILE:" + encodedFile);
 
             System.out.println("Archivo enviado a " + destinatario + " en formato Base64.");
         } else {
@@ -836,6 +842,8 @@ public static void recibirArchivoBase64(String base64FileContent) {
             e.printStackTrace();
         }
     }
+private static boolean listenerAdded = false;
+
 public static boolean iniciarSesion(String domain, String username, String password) {
     try {
         // Configurar el DNS resolver
@@ -870,6 +878,9 @@ public static boolean iniciarSesion(String domain, String username, String passw
                 System.out.println(" - " + feature.getVar());
             }
 
+
+
+            if (!listenerAdded) {
             // Añadir el listener para mensajes entrantes
             ChatManager chatManager = ChatManager.getInstanceFor(connection);
             chatManager.addIncomingListener((from, message, chat) -> {
@@ -879,10 +890,10 @@ public static boolean iniciarSesion(String domain, String username, String passw
                 RegisterAccount registerAccount = new RegisterAccount();
                 
                 // Mostrar el mensaje en la interfaz gráfica (chatArea)
-                Platform.runLater(() -> registerAccount.agregarMensaje(from.toString() + ": " + message.getBody(), false));
+              //  Platform.runLater(() -> registerAccount.agregarMensaje(from.toString() + ": " + message.getBody(), false));
             
                 // Añadir el mensaje a la lista de notificaciones
-                addNotification("Nuevo mensaje de " + from + ": " + message.getBody());
+               // addNotification("Nuevo mensaje de " + from + ": " + message.getBody());
 
                 if (message.getBody() != null) {
                     System.out.println("Mensaje recibido de " + from + ": " + message.getBody());
@@ -891,20 +902,21 @@ public static boolean iniciarSesion(String domain, String username, String passw
                     if (message.getBody().startsWith("BASE64FILE:")) {
                         // Si el mensaje comienza con "BASE64FILE:", extraer el contenido Base64
                         String base64Content = message.getBody().substring("BASE64FILE:".length());
-                        String outputFilePath = "C:\\Users\\marce\\Desktop";  // Definir ruta para guardar el archivo
+                       // String outputFilePath = "C:\\Users\\marce\\Desktop";  // Definir ruta para guardar el archivo
                         recibirArchivoBase64(base64Content);
-                    } else if (message.getBody().matches("^[A-Za-z0-9+/=\\s]+$")) {
+                    } //else if (message.getBody().matches("^[A-Za-z0-9+/=\\s]+$")) {
                         // Si el mensaje parece ser una cadena Base64 (sin prefijo)
                         
-                        String outputFilePath = "C:\\Users\\marce\\Desktop";  // Definir ruta para guardar el archivo
-        recibirArchivoBase64(message.getBody());
-                    } else {
-                        registerAccount.agregarMensaje(from.toString() + ": " + message.getBody(), false);
+                        //String outputFilePath = "C:\\Users\\marce\\Desktop";  // Definir ruta para guardar el archivo
+        //recibirArchivoBase64(message.getBody());
+                    else {
+                    //    registerAccount.agregarMensaje(from.toString() + ": " + message.getBody(), false);
                         addNotification("Nuevo mensaje de " + from + ": " + message.getBody());
                     }
                 }
             });
-            
+            listenerAdded = true;
+        }
             System.out.println("Listener de mensajes entrantes añadido.");
 
             // Añadir listener para cambios en la presencia
