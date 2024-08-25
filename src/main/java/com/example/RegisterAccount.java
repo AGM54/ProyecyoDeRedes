@@ -41,6 +41,8 @@ import java.io.IOException;
 import java.util.Collection;
 
 import javax.swing.JFileChooser;
+
+
 import java.util.Base64;
 
 
@@ -55,6 +57,7 @@ import org.jxmpp.jid.DomainBareJid;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
@@ -282,30 +285,39 @@ private void iniciarChatGrupalUI(Stage primaryStage) {
         }
     });
 }
+private MultiUserChat chatGrupal;
+private String nombreSalaActual;  // Variable para almacenar el nombre de la sala actual
 
 private void seleccionarSalaChatGrupal() {
+    // Crear un cuadro de diálogo para ingresar el nombre de la sala
     TextInputDialog dialog = new TextInputDialog();
     dialog.setTitle("Seleccionar sala de chat grupal");
     dialog.setHeaderText("Unirse o crear una sala de chat grupal");
     dialog.setContentText("Ingrese el nombre de la sala:");
 
+    // Esperar a que el usuario ingrese el nombre
     dialog.showAndWait().ifPresent(nombreSala -> {
         try {
+            // Almacenar el nombre de la sala ingresado por el usuario
+            nombreSalaActual = nombreSala;
+
+            // Crear el JID completo de la sala basado en el nombre ingresado
             MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
-            EntityBareJid salaJid = JidCreate.entityBareFrom(nombreSala + "@conference.alumchat.lol");
+            EntityBareJid salaJid = JidCreate.entityBareFrom(nombreSalaActual + "@conference.alumchat.lol");
 
-            // Obtener la sala de chat grupal
-            MultiUserChat chatGrupal = manager.getMultiUserChat(salaJid);
+            // Obtener la sala de chat grupal o crearla si no existe
+            chatGrupal = manager.getMultiUserChat(salaJid);
 
-            // Unirse a la sala si no estás ya unido
+            // Unirse a la sala si aún no lo has hecho
             if (!chatGrupal.isJoined()) {
                 chatGrupal.join(Resourcepart.from(username));
             }
 
-            agregarMensaje("Te has unido a la sala: " + nombreSala, false);
+            // Mostrar un mensaje confirmando la unión a la sala
+            agregarMensaje("Te has unido a la sala: " + nombreSalaActual, false);
 
-            // Listener para recibir mensajes en el grupo
-            chatGrupal.addMessageListener((message) -> {
+            // Listener para recibir mensajes en el chat grupal
+            chatGrupal.addMessageListener(message -> {
                 Platform.runLater(() -> {
                     if (message.getBody() != null) {
                         agregarMensaje(message.getFrom() + ": " + message.getBody(), false);
@@ -317,9 +329,6 @@ private void seleccionarSalaChatGrupal() {
             e.printStackTrace();
         }
     });
-}
-
-
 
 private void configureRoom(MultiUserChat chatGrupal) {
     try {
@@ -336,12 +345,15 @@ private void configureRoom(MultiUserChat chatGrupal) {
 
 private void enviarMensajeGrupal(String mensaje) {
     try {
-        if (connection != null && connection.isAuthenticated()) {
-            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
-            MultiUserChat chatGrupal = manager.getMultiUserChat(JidCreate.entityBareFrom("nombreSala@conference.alumchat.lol"));
+        // Verificar que el usuario esté autenticado y conectado a un chat grupal
+        if (chatGrupal != null && connection.isAuthenticated()) {
+            // Enviar el mensaje al grupo
             chatGrupal.sendMessage(mensaje);
+
+            // Mostrar el mensaje en la interfaz gráfica del usuario
+            agregarMensaje("Tú: " + mensaje, true);
         } else {
-            System.out.println("No has iniciado sesión.");
+            System.out.println("No has iniciado sesión o no estás en un chat grupal.");
         }
     } catch (Exception e) {
         System.out.println("Error al enviar mensaje grupal: " + e.getMessage());
