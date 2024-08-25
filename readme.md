@@ -10,7 +10,6 @@ This project is a messaging application using the XMPP protocol (Extensible Mess
 
 ## Installation
 
-### 1. Clonar el repositorio
 
 ### 1. Clone the repository
 
@@ -31,7 +30,7 @@ If you do not have Maven installed, follow these steps:
 2. Unzip the downloaded file.
 3. Add the bin folder from Maven to your system's environment variables.
    
-### En Linux/macOS
+###  On Linux (Debian/Ubuntu)
 
 You can install Maven using apt-get or brew:
 
