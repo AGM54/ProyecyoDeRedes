@@ -1,39 +1,39 @@
 
 # XMPP Client Project
 
-Este proyecto es una aplicación de mensajería utilizando el protocolo XMPP (Extensible Messaging and Presence Protocol). El proyecto está desarrollado en Java utilizando JavaFX para la interfaz gráfica y Smack para la gestión de la mensajería.
+This project is a messaging application using the XMPP protocol (Extensible Messaging and Presence Protocol). The project is developed in Java using JavaFX for the graphical interface and Smack for managing the messaging.
 
-## Requisitos
-
-- **Java 8 o superior**
+## Requirements
+- **Java 8 or higher**
 - **Apache Maven**
-- **Internet** (para resolver dependencias y conectarse al servidor XMPP)
+- **Internet** (to resolve dependencies and connect to the XMPP server)
 
-## Instalación
+## Installation
 
 ### 1. Clonar el repositorio
 
-Primero, clona este repositorio en tu máquina local:
+### 1. Clone the repository
+
+First, clone this repository to your local machine:
 
 ```bash
 git clone https://github.com/AGM54/ProyectoDeRedes
 cd ProyectoDeRedes
-
 ```
 
-### 2. Instalar Maven
+### 2. Install Maven
 
-Si no tienes Maven instalado, sigue estos pasos:
+If you do not have Maven installed, follow these steps:
 
-### En Windows
+### On Linux/macOS
 
-1. Descarga Maven desde su sitio oficial: [Maven Downloads](https://maven.apache.org/download.cgi).
-2. Descomprime el archivo descargado.
-3. Añade la ruta de la carpeta `bin` de Maven a las variables de entorno.
-
+1. Download Maven from its official website: https://maven.apache.org/download.cgi
+2. Unzip the downloaded file.
+3. Add the bin folder from Maven to your system's environment variables.
+   
 ### En Linux/macOS
 
-Puedes instalar Maven usando `apt-get` o `brew`:
+You can install Maven using apt-get or brew:
 
 ```bash
 sudo apt-get install maven  # Linux (Debian/Ubuntu)
@@ -41,27 +41,27 @@ brew install maven          # macOS
 
 ```
 
-### 3. Instalar Java
-Si no tienes Java instalado ,sigue estos pasos:
-### En Windows
+### 3. Install Java
+If you do not have Java installed, follow these steps:
+### On Windows
 
-1. Descarga el JDK desde el sitio oficial de Oracle: Descargar JDK.
-2. Instala el archivo descargado siguiendo las instrucciones del instalador.  
-3. Configura las variables de entorno de tu sistema para incluir la ruta de java y javac. Esto se hace añadiendo el JAVA_HOME y actualizando la variable PATH para incluir el directorio bin dentro del directorio del JDK.
+1. Download the JDK from Oracle's official website: Download JDK.
+2. Install the downloaded file by following the installer instructions.
+3. Set up your system's environment variables to include the path to java and javac. This is done by adding JAVA_HOME and updating the PATH variable to include the bin directory within the JDK directory.
 
 
-### En Linux (Debian/Ubuntu)
+### On Linux (Debian/Ubuntu)
 ```bash
 sudo apt-get update
 sudo apt-get install default-jdk
 ```
-### 4. Compilar el Proyecto
-Una vez que Maven esté instalado y hayas clonado el repositorio, navega a la carpeta del proyecto y ejecuta el siguiente comando:
+### 4. Build the Project
+Once Maven is installed and you have cloned the repository, navigate to the project folder and run the following command:
 ```bash
 mvn clean install
 ```
-### 5. Ejecutar la aplicación
-Una vez compilado, puedes ejecutar la aplicación con el siguiente comando:
+### 5. Run the Application
+Once built, you can run the application with the following command:
 
 ```bash
 mvn javafx:run
