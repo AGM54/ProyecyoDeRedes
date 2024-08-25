@@ -15,12 +15,10 @@ Este proyecto es una aplicación de mensajería utilizando el protocolo XMPP (Ex
 
 Primero, clona este repositorio en tu máquina local:
 
-```bash
-git clone https://github.com/AGM54/ProyecyoDeRedes
-cd ProyectoDeRedes
 
 
-## 2. Instalar Maven
+
+### 2. Instalar Maven
 
 Si no tienes Maven instalado, sigue estos pasos:
 
