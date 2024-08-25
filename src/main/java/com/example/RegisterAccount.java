@@ -1,5 +1,5 @@
 package com.example;
-//lib
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -57,7 +57,6 @@ import org.jxmpp.jid.DomainBareJid;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
@@ -692,43 +691,59 @@ public static void recibirArchivoBase64(String base64FileContent) {
     }
     
 
+private void eliminarCuentaUI() {
+    Stage stage = new Stage();
+    stage.setTitle("Eliminar cuenta");
 
-    private void eliminarCuentaUI() {
-        Stage stage = new Stage();
-        stage.setTitle("Eliminar cuenta");
-    
-        VBox vbox = new VBox(15);
-        vbox.setPadding(new Insets(20));
-        vbox.setAlignment(Pos.CENTER);
-        vbox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
-    
-        Label label = new Label("Eliminar cuenta");
-        label.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 16px; -fx-font-weight: bold;");
-        
-        TextField usernameField = new TextField();
-        usernameField.setPromptText("Usuario");
-        usernameField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-        
-        PasswordField passwordField = new PasswordField();
-        passwordField.setPromptText("Contraseña");
-        passwordField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-        
-        Button deleteButton = createStyledButton("Eliminar", "#F44336", "white", "#D32F2F");
-    
-        vbox.getChildren().addAll(label, usernameField, passwordField, deleteButton);
-    
-        Scene scene = new Scene(vbox, 300, 250);
-        stage.setScene(scene);
-        stage.show();
-    
-        deleteButton.setOnAction(e -> {
-            String username = usernameField.getText();
-            String password = passwordField.getText();
-            eliminarCuenta("alumchat.lol", username, password);
-            stage.close();
-        });
-    }
-    
+    VBox vbox = new VBox(15);
+    vbox.setPadding(new Insets(20));
+    vbox.setAlignment(Pos.CENTER);
+    vbox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+
+    Label label = new Label("Eliminar cuenta");
+    label.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 16px; -fx-font-weight: bold;");
+
+    TextField usernameField = new TextField();
+    usernameField.setPromptText("Usuario");
+    usernameField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+
+    PasswordField passwordField = new PasswordField();
+    passwordField.setPromptText("Contraseña");
+    passwordField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+
+    Button deleteButton = createStyledButton("Eliminar", "#F44336", "white", "#D32F2F");
+
+    vbox.getChildren().addAll(label, usernameField, passwordField, deleteButton);
+
+    Scene scene = new Scene(vbox, 300, 250);
+    stage.setScene(scene);
+    stage.show();
+
+    deleteButton.setOnAction(e -> {
+        String username = usernameField.getText();
+        String password = passwordField.getText();
+        boolean success = eliminarCuenta("alumchat.lol", username, password); // Modificado para devolver un booleano
+
+        if (success) {
+            // Mostrar un popup de éxito
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Éxito");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("La cuenta ha sido eliminada exitosamente.");
+            successAlert.showAndWait();
+        } else {
+            // Mostrar un popup de error
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Error");
+            errorAlert.setHeaderText(null);
+            errorAlert.setContentText("Hubo un problema al eliminar la cuenta. Por favor, intente nuevamente.");
+            errorAlert.showAndWait();
+        }
+
+        stage.close();
+    });
+}
+
 
     private void agregarContactoUI() {
         TextInputDialog dialog = new TextInputDialog();
@@ -767,81 +782,112 @@ public static void recibirArchivoBase64(String base64FileContent) {
     
     
 
+  
     private void registrarCuentaUI() {
-        Stage stage = new Stage();
-        stage.setTitle("Registrar nueva cuenta");
+    Stage stage = new Stage();
+    stage.setTitle("Registrar nueva cuenta");
+
+    VBox vbox = new VBox(15);
+    vbox.setPadding(new Insets(20));
+    vbox.setAlignment(Pos.CENTER);
+    vbox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+
+    Label label = new Label("Registrar nueva cuenta");
+    label.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 16px; -fx-font-weight: bold;");
+
+    TextField usernameField = new TextField();
+    usernameField.setPromptText("Usuario");
+    usernameField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+
+    PasswordField passwordField = new PasswordField();
+    passwordField.setPromptText("Contraseña");
+    passwordField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
+
+    Button registerButton = createStyledButton("Registrar", "#4CAF50", "white", "#388E3C");
+
+    vbox.getChildren().addAll(label, usernameField, passwordField, registerButton);
+
+    Scene scene = new Scene(vbox, 300, 250);
+    stage.setScene(scene);
+    stage.show();
+
+    registerButton.setOnAction(e -> {
+        String username = usernameField.getText();
+        String password = passwordField.getText();
     
-        VBox vbox = new VBox(15);
-        vbox.setPadding(new Insets(20));
-        vbox.setAlignment(Pos.CENTER);
-        vbox.setStyle("-fx-background-color: #2c3e50; -fx-border-radius: 10px; -fx-background-radius: 10px;");
-    
-        Label label = new Label("Registrar nueva cuenta");
-        label.setStyle("-fx-text-fill: #ecf0f1; -fx-font-size: 16px; -fx-font-weight: bold;");
-        
-        TextField usernameField = new TextField();
-        usernameField.setPromptText("Usuario");
-        usernameField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-        
-        PasswordField passwordField = new PasswordField();
-        passwordField.setPromptText("Contraseña");
-        passwordField.setStyle("-fx-background-color: #34495e; -fx-text-fill: #ecf0f1; -fx-prompt-text-fill: #bdc3c7; -fx-border-radius: 5px; -fx-background-radius: 5px;");
-        
-        Button registerButton = createStyledButton("Registrar", "#4CAF50", "white", "#388E3C");
-        
-        vbox.getChildren().addAll(label, usernameField, passwordField, registerButton);
-    
-        Scene scene = new Scene(vbox, 300, 250);
-        stage.setScene(scene);
-        stage.show();
-    
-        registerButton.setOnAction(e -> {
-            String username = usernameField.getText();
-            String password = passwordField.getText();
-            registrarCuenta("alumchat.lol", username, password);
-            stage.close();
-        });
-    }
-    
-    public static void registrarCuenta(String domain, String username, String password) {
         try {
-            Localpart localpart = Localpart.from(username);
-
-            // Configurar el DNS resolver
-            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
-
-            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                    .setXmppDomain(domain)
-                    .setHost(domain)
-                    .setPort(5222)
-                    .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
-                    .build();
-
-            connection = new XMPPTCPConnection(config);
-
-            try {
-                connection.connect();
-                System.out.println("Conectado al servidor");
-
-                AccountManager accountManager = AccountManager.getInstance(connection);
-                accountManager.sensitiveOperationOverInsecureConnection(true);
-
-                if (accountManager.supportsAccountCreation()) {
-                    accountManager.createAccount(localpart, password);
-                    System.out.println("Cuenta registrada exitosamente");
-                } else {
-                    System.out.println("El servidor no soporta la creación de cuentas");
-                }
-
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                connection.disconnect();
+            boolean registroExitoso = registrarCuenta("alumchat.lol", username, password);
+            
+            if (registroExitoso) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Registro exitoso");
+                alert.setHeaderText(null);
+                alert.setContentText("Cuenta registrada exitosamente.");
+                alert.showAndWait();
+            } else {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Registro fallido");
+                alert.setHeaderText(null);
+                alert.setContentText("El servidor no soporta la creación de cuentas.");
+                alert.showAndWait();
             }
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            // Si ocurre un error, mostrar alerta de error
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Registro fallido");
+            alert.setHeaderText(null);
+            alert.setContentText("Hubo un error al registrar la cuenta: " + ex.getMessage());
+            alert.showAndWait();
         }
+    
+        stage.close();
+    });
+}
+
+public static boolean registrarCuenta(String domain, String username, String password) throws Exception {
+    try {
+        Localpart localpart = Localpart.from(username);
+
+        // Configurar el DNS resolver
+        DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
+
+        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                .setXmppDomain(domain)
+                .setHost(domain)
+                .setPort(5222)
+                .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
+                .build();
+
+        connection = new XMPPTCPConnection(config);
+
+        try {
+            connection.connect();
+            System.out.println("Conectado al servidor");
+
+            AccountManager accountManager = AccountManager.getInstance(connection);
+            accountManager.sensitiveOperationOverInsecureConnection(true);
+
+            if (accountManager.supportsAccountCreation()) {
+                accountManager.createAccount(localpart, password);
+                System.out.println("Cuenta registrada exitosamente");
+                return true; // Devuelve true si se registra con éxito
+            } else {
+                System.out.println("El servidor no soporta la creación de cuentas");
+                return false; // Devuelve false si no se soporta la creación de cuentas
+            }
+
+        } catch (SmackException | IOException | XMPPException | InterruptedException e) {
+            e.printStackTrace();
+            throw new Exception("Error durante el registro: " + e.getMessage()); // Propagar la excepción para manejarla en la interfaz de usuario
+        } finally {
+            connection.disconnect();
+        }
+    } catch (XmppStringprepException e) {
+        e.printStackTrace();
+        throw new Exception("Error al procesar el nombre de usuario: " + e.getMessage()); // Propagar la excepción
     }
+}
+
 private static boolean listenerAdded = false;
 
 public static boolean iniciarSesion(String domain, String username, String password) {
@@ -855,7 +901,7 @@ public static boolean iniciarSesion(String domain, String username, String passw
                 .setHost(domain)
                 .setPort(5222)
                 .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
-                .setDebuggerFactory(ConsoleDebugger::new)  // Habilitar depuración en consola
+                //.setDebuggerFactory(ConsoleDebugger::new)  // Habilitar depuración en consola
                 .build();
         System.out.println("Configuración de la conexión establecida.");
 
@@ -1020,7 +1066,7 @@ public static void cerrarSesion() {
         try {
             // Enviar presencia 'unavailable' antes de desconectarse
             Presence presence = new Presence(Presence.Type.unavailable);
-            connection.sendStanza(presence);  // Notifica al servidor que te desconectas
+            connection.sendStanza(presence);  // Notifica al servidor del estado de desconectado
             System.out.println("Presencia establecida como 'unavailable'.");
 
             // Desconectar la conexión
@@ -1035,40 +1081,43 @@ public static void cerrarSesion() {
     }
 }
 
+public static boolean eliminarCuenta(String domain, String username, String password) {
+    try {
+        // Configurar el DNS resolver
+        DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
 
-    public static void eliminarCuenta(String domain, String username, String password) {
+        XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
+                .setXmppDomain(domain)
+                .setHost(domain)
+                .setPort(5222)
+                .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
+                .build();
+
+        connection = new XMPPTCPConnection(config);
+
         try {
-            // Configurar el DNS resolver
-            DNSUtil.setDNSResolver(MiniDnsResolver.getInstance());
+            connection.connect();
+            connection.login(username, password);
+            System.out.println("Sesión iniciada exitosamente");
 
-            XMPPTCPConnectionConfiguration config = XMPPTCPConnectionConfiguration.builder()
-                    .setXmppDomain(domain)
-                    .setHost(domain)
-                    .setPort(5222)
-                    .setSecurityMode(XMPPTCPConnectionConfiguration.SecurityMode.disabled)
-                    .build();
+            AccountManager accountManager = AccountManager.getInstance(connection);
+            accountManager.deleteAccount();
+            System.out.println("Cuenta eliminada exitosamente.");
+            return true;  // La cuenta fue eliminada exitosamente
 
-            connection = new XMPPTCPConnection(config);
-
-            try {
-                connection.connect();
-                connection.login(username, password);
-                System.out.println("Sesión iniciada exitosamente");
-
-                AccountManager accountManager = AccountManager.getInstance(connection);
-                accountManager.deleteAccount();
-                System.out.println("Cuenta eliminada exitosamente.");
-
-            } catch (SmackException | IOException | XMPPException | InterruptedException e) {
-                System.out.println("Error al eliminar la cuenta: " + e.getMessage());
-                e.printStackTrace();
-            } finally {
-                connection.disconnect();
-            }
-        } catch (Exception e) {
+        } catch (SmackException | IOException | XMPPException | InterruptedException e) {
+            System.out.println("Error al eliminar la cuenta: " + e.getMessage());
             e.printStackTrace();
+            return false;  // Hubo un error al eliminar la cuenta
+        } finally {
+            connection.disconnect();
         }
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;  // Hubo un error inesperado
     }
+}
+
 
     public static void agregarContacto(String jidStr) {
         if (connection != null && connection.isAuthenticated()) {
@@ -1091,7 +1140,7 @@ public static void cerrarSesion() {
     try {
         // Verificar que la conexión esté autenticada
         if (connection != null && connection.isAuthenticated()) {
-            // Crear el JID del usuario del cual deseas obtener el estado de presencia
+           
             EntityBareJid jid = JidCreate.entityBareFrom(userJid);
 
             // Obtener el roster (lista de contactos)
@@ -1257,33 +1306,99 @@ public static void cerrarSesion() {
         }
     }
     
+public static void definirMensajePresencia() {
+    if (connection != null && connection.isAuthenticated()) {
+        try {
+            // Crear el diálogo para seleccionar el estado de presencia
+            Stage stage = new Stage();
+            stage.setTitle("Definir mensaje de presencia");
 
-    public static void definirMensajePresencia() {
-        if (connection != null && connection.isAuthenticated()) {
-            try {
-                TextInputDialog dialog = new TextInputDialog();
-                dialog.setTitle("Definir mensaje de presencia");
-                dialog.setHeaderText("Definir mensaje de presencia");
-                dialog.setContentText("Ingrese su mensaje de presencia:");
+            VBox vbox = new VBox(15);
+            vbox.setPadding(new Insets(20));
+            vbox.setAlignment(Pos.CENTER);
+            vbox.setStyle("-fx-background-color: #f9f9f9; -fx-border-radius: 10px; -fx-background-radius: 10px;");
 
-                dialog.showAndWait().ifPresent(mensaje -> {
-                    Presence presence = new Presence(Presence.Type.available);
-                    presence.setStatus(mensaje);
-                    try {
-                        connection.sendStanza(presence);
-                    } catch (SmackException.NotConnectedException | InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Mensaje de presencia actualizado.");
-                });
-            } catch (Exception e) {
-                System.out.println("Error al definir el mensaje de presencia: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            System.out.println("No has iniciado sesión.");
+            Label label = new Label("Seleccione su estado de presencia:");
+            label.setStyle("-fx-font-size: 14px;");
+
+            // Crear un ComboBox para seleccionar el estado de presencia
+            ComboBox<String> presenceComboBox = new ComboBox<>();
+            presenceComboBox.getItems().addAll("available", "unavailable", "away", "chat", "custom");
+            presenceComboBox.setValue("available");
+
+            // Crear un campo de texto para el mensaje personalizado
+            TextField customMessageField = new TextField();
+            customMessageField.setPromptText("Escribe tu mensaje de presencia...");
+            customMessageField.setDisable(true);  // Deshabilitar al inicio
+
+            // Habilitar el campo de mensaje personalizado solo si se selecciona "custom"
+            presenceComboBox.setOnAction(e -> {
+                if (presenceComboBox.getValue().equals("custom")) {
+                    customMessageField.setDisable(false);
+                } else {
+                    customMessageField.setDisable(true);
+                }
+            });
+
+            Button saveButton = new Button("Guardar");
+            saveButton.setOnAction(e -> {
+                String selectedPresence = presenceComboBox.getValue();
+                String customMessage = customMessageField.getText();
+
+                // Crear un mensaje de presencia y enviar el estado como texto
+                Presence presence;
+                switch (selectedPresence) {
+                    case "available":
+                        presence = new Presence(Presence.Type.available);
+                        presence.setStatus("available"); // Enviar el estado como texto
+                        break;
+                    case "unavailable":
+                        presence = new Presence(Presence.Type.unavailable);
+                        presence.setStatus("unavailable"); // Enviar el estado como texto
+                        break;
+                    case "away":
+                        presence = new Presence(Presence.Type.available);
+                        presence.setMode(Presence.Mode.away);
+                        presence.setStatus("away"); // Enviar el estado como texto
+                        break;
+                    case "chat":
+                        presence = new Presence(Presence.Type.available);
+                        presence.setMode(Presence.Mode.chat);
+                        presence.setStatus("chat"); // Enviar el estado como texto
+                        break;
+                    case "custom":
+                        presence = new Presence(Presence.Type.available);
+                        presence.setStatus(customMessage); // Enviar el mensaje personalizado
+                        break;
+                    default:
+                        presence = new Presence(Presence.Type.available);
+                        presence.setStatus("available"); // Fallback a 'available' como texto
+                }
+
+                try {
+                    connection.sendStanza(presence);
+                    System.out.println("Estado de presencia actualizado a: " + selectedPresence);
+                    stage.close();
+                } catch (SmackException.NotConnectedException | InterruptedException ex) {
+                    ex.printStackTrace();
+                }
+            });
+
+            vbox.getChildren().addAll(label, presenceComboBox, customMessageField, saveButton);
+
+            Scene scene = new Scene(vbox, 300, 200);
+            stage.setScene(scene);
+            stage.show();
+        } catch (Exception e) {
+            System.out.println("Error al definir el mensaje de presencia: " + e.getMessage());
+            e.printStackTrace();
         }
+    } else {
+        System.out.println("No has iniciado sesión.");
     }
+}
+
+
 
     private static void addNotification(String notification) {
         notifications.add(notification);
@@ -1309,15 +1424,18 @@ public static void cerrarSesion() {
 
 
 private static void agregarSubscribeListener() {
+    // Obtiene la instancia del Roster (lista de contactos) para la conexión actual
     Roster roster = Roster.getInstanceFor(connection);
     roster.addSubscribeListener((from, subscribeRequest) -> {
         try {
             roster.createEntry(from.asEntityBareJidIfPossible(), from.asEntityBareJidIfPossible().toString(), null);
             Presence subscribe = new Presence(Presence.Type.subscribe);
             subscribe.setTo(from);
+             // Envía la presencia al servidor, aprobando la solicitud de suscripción
             connection.sendStanza(subscribe);
             return SubscribeListener.SubscribeAnswer.Approve;
         } catch (Exception e) {
+           // Si ocurre algún error, se imprime la traza del error y se niega la suscripción
             e.printStackTrace();
             return SubscribeListener.SubscribeAnswer.Deny;
         }
@@ -1325,15 +1443,18 @@ private static void agregarSubscribeListener() {
 }
 
 
+
     private void showNotifications(Stage primaryStage) {
+        // Crea una ListView que contiene las notificaciones almacenadas en la lista 'notifications'
         ListView<String> notificationListView = new ListView<>(notifications);
+         // Crea un VBox para organizar los componentes verticalmente, con un espacio de 10 píxeles entre ellos
         VBox notificationBox = new VBox(10, new Label("Notificaciones"), notificationListView);
         notificationBox.setPadding(new Insets(10));
         notificationBox.setStyle("-fx-background-color: white;");
 
         Popup popup = new Popup();
         popup.getContent().add(notificationBox);
-        popup.setAutoHide(true);
+        popup.setAutoHide(true);// El Popup se cerrará automáticamente cuando el usuario haga clic fuera de él
         popup.show(primaryStage);
     }
 } 
