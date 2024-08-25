@@ -222,9 +222,4 @@ Displays the accumulated notifications in a popup over the main interface.
 
 
 
-mvn install
-mvn clean install
-mvn compile
-Powershell
- mvn exec:java '-Dexec.mainClass="com.example.RegisterAccount"
- mvn exec:java '-Dexec.mainClass="com.example.RegisterAccount"'
+
