@@ -39,6 +39,20 @@ Puedes instalar Maven usando `apt-get` o `brew`:
 sudo apt-get install maven  # Linux (Debian/Ubuntu)
 brew install maven          # macOS
 
+```
+
+### 3. Instalar Java
+Si no tienes Java instalado ,sigue estos pasos:
+### En Windows
+
+1 .Descarga el JDK desde el sitio oficial de Oracle: Descargar JDK.
+2. Instala el archivo descargado siguiendo las instrucciones del instalador.
+3. Configura las variables de entorno de tu sistema para incluir la ruta de java y javac. Esto se hace añadiendo el JAVA_HOME y actualizando la variable PATH para incluir el directorio bin dentro del directorio del JDK.
+### En Linux (Debian/Ubuntu)
+```bash
+sudo apt-get update
+sudo apt-get install default-jdk
+```
 
 
 
