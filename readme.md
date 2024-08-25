@@ -55,6 +55,21 @@ Si no tienes Java instalado ,sigue estos pasos:
 sudo apt-get update
 sudo apt-get install default-jdk
 ```
+### 4. Compilar el Proyecto
+Una vez que Maven esté instalado y hayas clonado el repositorio, navega a la carpeta del proyecto y ejecuta el siguiente comando:
+```bash
+mvn clean install
+```
+### 5. Ejecutar la aplicación
+Una vez compilado, puedes ejecutar la aplicación con el siguiente comando:
+
+```bash
+mvn javafx:run
+
+```
+
+
+
 
 
 
