@@ -20,6 +20,23 @@ git clone https://github.com/AGM54/ProyecyoDeRedes
 cd ProyectoDeRedes
 
 
+## 2. Instalar Maven
+
+Si no tienes Maven instalado, sigue estos pasos:
+
+### En Windows
+
+1. Descarga Maven desde su sitio oficial: [Maven Downloads](https://maven.apache.org/download.cgi).
+2. Descomprime el archivo descargado.
+3. Añade la ruta de la carpeta `bin` de Maven a las variables de entorno.
+
+### En Linux/macOS
+
+Puedes instalar Maven usando `apt-get` o `brew`:
+
+```bash
+sudo apt-get install maven  # Linux (Debian/Ubuntu)
+brew install maven          # macOS
 
 
 
