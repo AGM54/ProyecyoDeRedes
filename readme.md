@@ -66,6 +66,29 @@ Once built, you can run the application with the following command:
 mvn javafx:run
 
 ```
+## Features
+
+- **User Registration and Login**: The application allows users to register new accounts or log in with existing accounts using the XMPP protocol. The registration and login processes are handled securely, and users are authenticated with their credentials.
+
+- **Real-Time Messaging**: Users can send and receive real-time messages to and from other users. The application supports single-user chats with incoming message listeners to display received messages in real-time.
+
+- **Group Chat**: The application supports multi-user chat rooms. Users can join or create group chats, and all participants in the room can send and receive messages in real-time.
+
+- **Contact Management**: Users can add new contacts to their roster, view their current contact list, and manage contact presence statuses. The presence of contacts (online, offline, away, etc.) is updated in real-time.
+
+- **File Transfer**: The application allows users to send and receive files. Files are encoded in Base64 format for transfer, ensuring compatibility across different systems. Users can also choose the location where received files will be saved.
+
+- **Presence Management**: Users can set their availability status (e.g., available, away, do not disturb) with customizable messages that other users can see. The presence is shared across the network, and other users can see the current status of each user.
+
+- **Notifications**: The application supports in-app notifications. Users are notified of new messages, file transfers, and presence changes within the application. Notifications are displayed in a dedicated section.
+
+- **Account Deletion**: Users can delete their accounts from the XMPP server through the application interface, removing all associated data from the server.
+
+- **JavaFX Graphical Interface**: The application uses JavaFX to create a user-friendly graphical interface that provides a smooth user experience for messaging, managing contacts, and handling file transfers.
+
+- **Customizable Themes**: The application's interface is styled with CSS, allowing for custom themes and visual adjustments.
+
+
 
 # Methods
 ### `start(Stage primaryStage)`
