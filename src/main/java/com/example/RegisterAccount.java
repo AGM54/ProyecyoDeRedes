@@ -42,7 +42,6 @@ import java.util.Collection;
 
 import javax.swing.JFileChooser;
 
-
 import java.util.Base64;
 
 
@@ -272,7 +271,7 @@ private void iniciarChatGrupalUI(Stage primaryStage) {
     groupChatStage.show();
 
     // Configurar el chat grupal
-    //seleccionarSalaChatGrupal();
+    seleccionarSalaChatGrupal();
 
     // Añadir el listener de envío de mensajes
     sendButton.setOnAction(e -> {
@@ -288,48 +287,44 @@ private void iniciarChatGrupalUI(Stage primaryStage) {
 private MultiUserChat chatGrupal;
 private String nombreSalaActual;  // Variable para almacenar el nombre de la sala actual
 
-// private void seleccionarSalaChatGrupal() {
-//     // Crear un cuadro de diálogo para ingresar el nombre de la sala
-//     TextInputDialog dialog = new TextInputDialog();
-//     dialog.setTitle("Seleccionar sala de chat grupal");
-//     dialog.setHeaderText("Unirse o crear una sala de chat grupal");
-//     dialog.setContentText("Ingrese el nombre de la sala:");
+private void seleccionarSalaChatGrupal() {
+    TextInputDialog dialog = new TextInputDialog();
+    dialog.setTitle("Seleccionar sala de chat grupal");
+    dialog.setHeaderText("Unirse o crear una sala de chat grupal");
+    dialog.setContentText("Ingrese el nombre de la sala:");
 
-//     // Esperar a que el usuario ingrese el nombre
-//     dialog.showAndWait().ifPresent(nombreSala -> {
-//         try {
-//             // Almacenar el nombre de la sala ingresado por el usuario
-//             nombreSalaActual = nombreSala;
+    dialog.showAndWait().ifPresent(nombreSala -> {
+        try {
+            // Guardar el nombre de la sala actual
+            nombreSalaActual = nombreSala;
 
-//             // Crear el JID completo de la sala basado en el nombre ingresado
-//             MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
-//             EntityBareJid salaJid = JidCreate.entityBareFrom(nombreSalaActual + "@conference.alumchat.lol");
+            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
+            EntityBareJid salaJid = JidCreate.entityBareFrom(nombreSalaActual + "@conference.alumchat.lol");
 
-//             // Obtener la sala de chat grupal o crearla si no existe
-//             chatGrupal = manager.getMultiUserChat(salaJid);
+            // Obtener o crear la sala de chat grupal
+            chatGrupal = manager.getMultiUserChat(salaJid);
 
-//             // Unirse a la sala si aún no lo has hecho
-//             if (!chatGrupal.isJoined()) {
-//                 chatGrupal.join(Resourcepart.from(username));
-//             }
+            // Unirse a la sala si no se  ha unido
+            if (!chatGrupal.isJoined()) {
+                chatGrupal.join(Resourcepart.from(username));
+            }
 
-//             // Mostrar un mensaje confirmando la unión a la sala
-//             agregarMensaje("Te has unido a la sala: " + nombreSalaActual, false);
+            agregarMensaje("Te has unido a la sala: " + nombreSalaActual, false);
 
-//             // Listener para recibir mensajes en el chat grupal
-//             chatGrupal.addMessageListener(message -> {
-//                 Platform.runLater(() -> {
-//                     if (message.getBody() != null) {
-//                         agregarMensaje(message.getFrom() + ": " + message.getBody(), false);
-//                     }
-//                 });
-//             });
+            // Listener para recibir mensajes en el grupo
+            chatGrupal.addMessageListener((message) -> {
+                Platform.runLater(() -> {
+                    if (message.getBody() != null) {
+                        agregarMensaje(message.getFrom() + ": " + message.getBody(), false);
+                    }
+                });
+            });
 
-//         } catch (Exception e) {
-//             e.printStackTrace();
-//         }
-//     });
-// }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    });
+}
 
 
 private void configureRoom(MultiUserChat chatGrupal) {
@@ -347,12 +342,11 @@ private void configureRoom(MultiUserChat chatGrupal) {
 
 private void enviarMensajeGrupal(String mensaje) {
     try {
-        if (connection != null && connection.isAuthenticated()) {
-            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
-            MultiUserChat chatGrupal = manager.getMultiUserChat(JidCreate.entityBareFrom("nombreSala@conference.alumchat.lol"));
-            chatGrupal.sendMessage(mensaje);
+        if (chatGrupal != null && connection.isAuthenticated()) {
+            chatGrupal.sendMessage(mensaje);  // Enviar el mensaje al grupo
+            agregarMensaje("Tú: " + mensaje, true);  // Mostrar el mensaje en la interfaz
         } else {
-            System.out.println("No has iniciado sesión.");
+            System.out.println("No has iniciado sesión o no estás en un chat grupal.");
         }
     } catch (Exception e) {
         System.out.println("Error al enviar mensaje grupal: " + e.getMessage());
@@ -361,35 +355,84 @@ private void enviarMensajeGrupal(String mensaje) {
 }
 
 
+private void buscarContacto(String jidStr) {
+    if (connection != null && connection.isAuthenticated()) {
+        try {
+            EntityBareJid jid = JidCreate.entityBareFrom(jidStr);
+            Roster roster = Roster.getInstanceFor(connection);
 
-    
+            // Verifica si el contacto ya está en el roster
+            if (roster.contains(jid)) {
+                // Obtener la presencia del contacto
+                Presence presence = roster.getPresence(jid);
+                mostrarDetallesContacto(jid, presence);
+            } else {
+                // Agregar temporalmente al contacto para verificar su presencia
+                roster.createEntry(jid, jidStr, null);
 
-    private void showContactOptions(Stage primaryStage) {
-        Stage optionsStage = new Stage();
-        optionsStage.setTitle("Opciones de Contactos");
-    
-        VBox optionsBox = new VBox(15);
-        optionsBox.setPadding(new Insets(20));
-        optionsBox.setAlignment(Pos.CENTER);
-        optionsBox.setStyle("-fx-background-color: #000000; -fx-border-radius: 10px; -fx-background-radius: 10px;");
-    
-        // Crear botones con estilos personalizados
-        Button showUsersButton = createStyledButton("Mostrar todos los usuarios conectados", "#4CAF50", "white", "#388E3C");
-        Button viewContactsButton = createStyledButton("Ver contactos", "#2196F3", "white", "#1976D2");
-        Button addContactButton = createStyledButton("Agregar un contacto", "#FF9800", "white", "#F57C00");
-    
-        // Asignar acciones a los botones
-        showUsersButton.setOnAction(e -> mostrarUsuariosConectados());
-        viewContactsButton.setOnAction(e -> verContactos());
-        addContactButton.setOnAction(e -> agregarContactoUI());
-    
-        // Añadir los botones al VBox
-        optionsBox.getChildren().addAll(showUsersButton, viewContactsButton, addContactButton);
-    
-        Scene optionsScene = new Scene(optionsBox, 400, 250);
-        optionsStage.setScene(optionsScene);
-        optionsStage.show();
+                // Darle un tiempo para recibir la actualización de presencia
+                Thread.sleep(1000);  // Pequeño retraso para permitir la recepción de la presencia
+
+                // Obtener la presencia del contacto
+                Presence presence = roster.getPresence(jid);
+                mostrarDetallesContacto(jid, presence);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("No se pudo buscar el contacto");
+            alert.setContentText("Hubo un problema al buscar el contacto: " + e.getMessage());
+            alert.showAndWait();
+        }
+    } else {
+        System.out.println("No has iniciado sesión.");
     }
+}
+
+
+private void mostrarDetallesContacto(EntityBareJid jid, Presence presence) {
+    String estado = presence.isAvailable() ? "Conectado" : "Desconectado";
+    String mensajePresencia = presence.getStatus() != null ? presence.getStatus() : "Sin mensaje de presencia";
+    
+    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+    alert.setTitle("Detalles del contacto");
+    alert.setHeaderText("Detalles de " + jid.toString());
+    alert.setContentText("Estado: " + estado + "\nMensaje de presencia: " + mensajePresencia);
+    alert.showAndWait();
+}
+
+
+    
+private void showContactOptions(Stage primaryStage) {
+    Stage optionsStage = new Stage();
+    optionsStage.setTitle("Opciones de Contactos");
+
+    VBox optionsBox = new VBox(15);
+    optionsBox.setPadding(new Insets(20));
+    optionsBox.setAlignment(Pos.CENTER);
+    optionsBox.setStyle("-fx-background-color: #000000; -fx-border-radius: 10px; -fx-background-radius: 10px;");
+
+    // Crear botones con estilos personalizados
+    Button showUsersButton = createStyledButton("Mostrar todos los usuarios conectados", "#4CAF50", "white", "#388E3C");
+    Button viewContactsButton = createStyledButton("Ver contactos", "#2196F3", "white", "#1976D2");
+    Button addContactButton = createStyledButton("Agregar un contacto", "#FF9800", "white", "#F57C00");
+    Button searchContactButton = createStyledButton("Buscar contacto", "#FFC107", "white", "#FFB300");
+
+    // Asignar acciones a los botones
+    showUsersButton.setOnAction(e -> mostrarUsuariosConectados());
+    viewContactsButton.setOnAction(e -> verContactos());
+    addContactButton.setOnAction(e -> agregarContactoUI());
+    searchContactButton.setOnAction(e -> buscarContactoUI());  // Añadir la acción para buscar contacto
+
+    // Añadir los botones al VBox
+    optionsBox.getChildren().addAll(showUsersButton, viewContactsButton, addContactButton, searchContactButton);
+
+    Scene optionsScene = new Scene(optionsBox, 400, 250);
+    optionsStage.setScene(optionsScene);
+    optionsStage.show();
+}
+
     
 
     private void showAccountOptions(Stage primaryStage) {
@@ -722,7 +765,7 @@ private void eliminarCuentaUI() {
     deleteButton.setOnAction(e -> {
         String username = usernameField.getText();
         String password = passwordField.getText();
-        boolean success = eliminarCuenta("alumchat.lol", username, password); // Modificado para devolver un booleano
+        boolean success = eliminarCuenta("alumchat.lol", username, password); 
 
         if (success) {
             // Mostrar un popup de éxito
@@ -756,7 +799,7 @@ private void eliminarCuentaUI() {
         customIcon.setFitWidth(30);
         customIcon.setFitHeight(30);
     
-        // Reemplazar el icono por defecto
+       
         dialog.setGraphic(customIcon);
     
         // Estilo del diálogo
@@ -934,8 +977,7 @@ public static boolean iniciarSesion(String domain, String username, String passw
             
                 // Crear una instancia de RegisterAccount para llamar al método no estático
                 RegisterAccount registerAccount = new RegisterAccount();
-                
-                // Mostrar el mensaje en la interfaz gráfica (chatArea)
+    
               //  Platform.runLater(() -> registerAccount.agregarMensaje(from.toString() + ": " + message.getBody(), false));
             
                 // Añadir el mensaje a la lista de notificaciones
@@ -1161,6 +1203,16 @@ public static boolean eliminarCuenta(String domain, String username, String pass
 }
 
 
+private void buscarContactoUI() {
+    TextInputDialog dialog = new TextInputDialog();
+    dialog.setTitle("Buscar contacto");
+    dialog.setHeaderText("Buscar contacto en el servidor");
+    dialog.setContentText("Ingrese el JID del contacto:");
+
+    dialog.showAndWait().ifPresent(contacto -> {
+        buscarContacto(contacto + "@alumchat.lol");  // Llama al método para buscar y mostrar la presencia
+    });
+}
 
     
     public static void verContactos() {
@@ -1447,7 +1499,6 @@ private static void agregarSubscribeListener() {
     private void showNotifications(Stage primaryStage) {
         // Crea una ListView que contiene las notificaciones almacenadas en la lista 'notifications'
         ListView<String> notificationListView = new ListView<>(notifications);
-         // Crea un VBox para organizar los componentes verticalmente, con un espacio de 10 píxeles entre ellos
         VBox notificationBox = new VBox(10, new Label("Notificaciones"), notificationListView);
         notificationBox.setPadding(new Insets(10));
         notificationBox.setStyle("-fx-background-color: white;");
